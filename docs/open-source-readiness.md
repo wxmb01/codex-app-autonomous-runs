@@ -13,6 +13,8 @@ Before publishing:
 - Confirm uninstall preserves modified or user-owned `hooks.json`.
 - Confirm timed runs of 1 hour or more include reviewer-subagent authorization in
   the skill prompt template.
+- Confirm the 1h+ reviewer lane is required in the first cycle before the first
+  implementation edit, not deferred until a readiness claim.
 - Confirm autonomous learning artifacts, schemas, and promotion gates are included.
 - Confirm `promotion-report.schema.json` requires install, commit, push, release,
   and reviewer evidence.

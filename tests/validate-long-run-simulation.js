@@ -10,6 +10,7 @@ const fixtureRoot = join(repoRoot, "examples", "long-run-simulation");
 const runRoot = join(fixtureRoot, "codex-app-active-runs");
 const runName = readFileSync(join(runRoot, "current"), "utf8").trim();
 const runDir = join(runRoot, runName);
+const threeHourRunDir = join(runRoot, "three-hour-first-cycle-reviewer");
 const schemaRoot = join(repoRoot, "templates", "codex", "skills", "timed-autonomous-run", "schemas");
 
 function readJson(path) {
@@ -97,7 +98,11 @@ const requiredFiles = [
   "codex-app-active-runs/medium-dashboard-hardening/improvement-candidates.jsonl",
   "codex-app-active-runs/medium-dashboard-hardening/promotion-report.json",
   "codex-app-active-runs/medium-dashboard-hardening/promotion-report.md",
-  "codex-app-active-runs/medium-dashboard-hardening/run-retrospective.json"
+  "codex-app-active-runs/medium-dashboard-hardening/run-retrospective.json",
+  "codex-app-active-runs/three-hour-first-cycle-reviewer/run-state.json",
+  "codex-app-active-runs/three-hour-first-cycle-reviewer/progress.md",
+  "codex-app-active-runs/three-hour-first-cycle-reviewer/progress.jsonl",
+  "codex-app-active-runs/three-hour-first-cycle-reviewer/run-retrospective.json"
 ];
 
 for (const file of requiredFiles) {
@@ -118,6 +123,8 @@ for (const [index, event] of events.entries()) {
 const first = Date.parse(events[0].timestamp);
 const last = Date.parse(events.at(-1).timestamp);
 assert.ok((last - first) / 60000 >= 30, "simulation must represent at least 30 minutes");
+assert.ok(events[0].reviewer.includes("reviewer_started"));
+assert.ok(events[0].reviewer.includes("before first implementation edit"));
 assert.ok(events.some((event) => event.reviewer.includes("project_completeness_reviewer")));
 assert.ok(events.some((event) => event.reviewer.includes("autonomous_reviewer")));
 
@@ -183,6 +190,27 @@ assert.ok(reportMd.includes("https://github.com/wxmb01/codex-app-autonomous-runs
 const retrospective = readJson(join(runDir, "run-retrospective.json"));
 validateRequired("retrospective", retrospective, "run-retrospective.schema.json");
 assert.equal(retrospective.outcome, "completed");
+
+const threeHourState = readJson(join(threeHourRunDir, "run-state.json"));
+validateRequired("three-hour run-state", threeHourState, "run-state.schema.json");
+assert.equal(threeHourState.completed_cycles, 12);
+assert.ok((Date.parse(threeHourState.deadline) - Date.parse(threeHourState.start_time)) / 60000 >= 180);
+const threeHourEvents = readJsonl(join(threeHourRunDir, "progress.jsonl"));
+assert.ok(threeHourEvents.length >= 4);
+for (const [index, event] of threeHourEvents.entries()) {
+  validateRequired(`three-hour progress event ${index + 1}`, event, "progress-event.schema.json");
+}
+assert.equal(threeHourEvents[0].cycle, 1);
+assert.equal(threeHourEvents[0].files_changed.length, 0);
+assert.ok(threeHourEvents[0].reviewer.includes("reviewer_started"));
+assert.ok(threeHourEvents[0].reviewer.includes("project_completeness_reviewer"));
+assert.ok(threeHourEvents[0].reviewer.includes("scope="));
+assert.ok(threeHourEvents[0].reviewer.includes("before first implementation edit"));
+assert.ok(threeHourEvents[0].reviewer.includes("continues in parallel"));
+const firstImplementation = threeHourEvents.find((event) => event.phase === "implementation");
+assert.ok(firstImplementation, "3-hour fixture must include implementation after reviewer launch");
+assert.ok(Date.parse(firstImplementation.timestamp) > Date.parse(threeHourEvents[0].timestamp));
+assert.ok(firstImplementation.self_review.includes("after reviewer_started"));
 
 const realPathRoot = join(tmpdir(), `codex-real-active-run-${Date.now()}`);
 const realActiveRoot = join(realPathRoot, ".codex", "app-active-runs");

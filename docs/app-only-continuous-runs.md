@@ -14,7 +14,9 @@ For no-pause or no-idle requests, the intended behavior is:
    learning candidates when useful, log, continue.
 6. Use read-only reviewer agents for medium and large projects.
 7. Treat runs of 1 hour or more as explicit authorization to start at least one
-   read-only reviewer subagent after orientation.
+   read-only reviewer subagent from the start of the run. Codex may do only minimal
+   preflight/orientation first, then must start the reviewer before the first
+   implementation edit.
 8. Stop only when the duration expires, the goal is complete, or an especially
    dangerous human checkpoint is reached.
 

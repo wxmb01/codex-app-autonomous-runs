@@ -94,7 +94,8 @@ work plus at least one read-only completeness reviewer. Specialized reviewers ar
 used when the project risk warrants them.
 
 For runs of 1 hour or more, the duration request itself authorizes at least one
-read-only reviewer subagent after orientation.
+read-only reviewer subagent from the start of the run. Codex may do only minimal
+preflight/orientation first, then it must start the reviewer before the first implementation edit.
 
 ## Autonomous Learning Loop
 

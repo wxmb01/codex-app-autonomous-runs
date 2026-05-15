@@ -41,6 +41,10 @@ done.
   authorization to start read-only reviewer subagents for review work. Do not require
   separate wording such as "start a subagent" or "parallel agent" before using the
   required review lane.
+- For 1 hour or longer App-only/timed project runs, launch the reviewer lane at the
+  start of the run. If the target requires orientation first, do only the minimum
+  path/git/stack/risk scan needed to write a useful reviewer prompt, then start the
+  reviewer in that same first cycle before the first implementation edit.
 
 ## App-Only Long Active Session
 
@@ -78,12 +82,19 @@ Execution rules:
 - Send brief user-facing progress updates during the active session, but do not use
   those updates as a stopping point.
 - For medium or large projects, always spawn a read-only project completeness reviewer
-  subagent early in the run and again at final readiness review. Prefer
+  subagent in the first cycle and again at final readiness review. Prefer
   `project_completeness_reviewer` when available.
 - For any run requested for 1 hour or more, start at least one read-only reviewer
-  subagent after orientation and before the first major readiness claim, even if the
+  subagent in the first cycle, before the first implementation edit, even if the
   project is small. Use `autonomous_reviewer` unless project size or risk calls for
   `project_completeness_reviewer` or a specialized reviewer.
+- The first user-facing progress update and first `progress.jsonl` event for 1h+
+  runs must record `reviewer_started`, the reviewer type, and the assigned review
+  scope. If subagents are unavailable, record `independent_reviewer_skipped_reason`
+  before implementation begins.
+- Do not wait idly for the first-cycle reviewer. After the reviewer is started and
+  logged, continue implementation in parallel unless the reviewer immediately reports
+  a P0/P1 blocker or a human checkpoint is required.
 - Use the read-only `autonomous_reviewer` on major changes, validation failures,
   architecture/security/UI/artifact-heavy work, or at regular milestones.
 - Run the autonomous learning loop during hardening and final review. Apply only
@@ -194,8 +205,8 @@ Context:
 
 Reviewer authorization:
 - If the requested duration is 1 hour or more, the user explicitly authorizes
-  read-only reviewer subagents. Start at least one reviewer after orientation and
-  before the first major readiness claim.
+  read-only reviewer subagents. Start at least one reviewer in the first cycle, after
+  only minimal preflight/orientation and before the first implementation edit.
 
 Constraints:
 - Operate in the target project path. If the current thread/workspace is different,
@@ -220,17 +231,19 @@ Per-cycle loop:
 1. Re-read latest user request and project context.
 2. Check worktree status and progress log.
 3. Update cycle counter: completed_cycles + 1 of total_cycles.
-4. Establish or refresh baseline verification.
-5. Select one highest-value issue.
-6. Make one focused change.
-7. Run the smallest relevant validation.
-8. Fix validation failures related to the current change.
-9. Run the review lane.
-10. Inspect real artifacts when relevant.
-11. Record learning candidates from friction, failures, reviewer findings, and user
+4. For 1h+ runs, start the required read-only reviewer lane before implementation
+   work; if unavailable, record `independent_reviewer_skipped_reason`.
+5. Establish or refresh baseline verification.
+6. Select one highest-value issue.
+7. Make one focused change.
+8. Run the smallest relevant validation.
+9. Fix validation failures related to the current change.
+10. Run milestone/change-level review when needed.
+11. Inspect real artifacts when relevant.
+12. Record learning candidates from friction, failures, reviewer findings, and user
     corrections.
-12. Promote eligible low-risk learning candidates only after validation.
-13. Update progress log and report concise status.
+13. Promote eligible low-risk learning candidates only after validation.
+14. Update progress log and report concise status.
 ```
 
 ## Engineering Loop
@@ -284,12 +297,13 @@ extend hardening rather than claiming readiness.
 - Every autonomous run must include a main-agent self-review before ending a cycle:
   inspect diff, tests, edge cases, user-visible behavior, docs, and likely regressions.
 - For medium or large projects, spawn one read-only `project_completeness_reviewer`
-  subagent after initial orientation and before declaring the project ready. It reviews
+  subagent in the first cycle and before declaring the project ready. It reviews
   project completeness, requirements coverage, validation gaps, architecture risks,
   documentation drift, and unresolved blockers.
 - A timed run of 1 hour or more counts as an explicit request for a read-only reviewer
-  subagent. Start the reviewer lane after orientation; do not skip it because the user
-  did not separately say "use a subagent".
+  subagent. Start the reviewer lane at the start of the run, after only minimal
+  orientation needed for a useful prompt and before implementation edits; do not skip
+  it because the user did not separately say "use a subagent".
 - For timed runs of 1 hour or more, large/unfamiliar projects, multi-file changes,
   UI/artifact work, architecture changes, migrations, security-sensitive code, failing
   validation, or explicit review/subagent requests, spawn one read-only reviewer
@@ -328,7 +342,7 @@ gaps, validation gaps, and the smallest next action.
   continuing, log lower-priority findings, and reject speculative findings with
   reasons.
 - Use at most one reviewer per review event. Medium and large runs require
-  `project_completeness_reviewer` after orientation and before final readiness.
+  `project_completeness_reviewer` in the first cycle and before final readiness.
   `autonomous_reviewer` may be additional for risky change-level review events.
   If subagents are unavailable, perform an explicit self-review and record that no
   independent reviewer was used.

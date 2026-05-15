@@ -1,0 +1,16 @@
+{
+  "run_id": "three-hour-first-cycle-reviewer",
+  "target": "/workspace/examples/long-run-simulation",
+  "goal": "Simulate a 3-hour Codex App active session that starts a reviewer subagent before the first implementation edit.",
+  "completed_at": "2026-01-02T03:00:00Z",
+  "outcome": "completed",
+  "automation_friction": "Prior wording allowed reviewer launch to drift until a later readiness claim.",
+  "validation_gaps": "Needed a 1h+ fixture proving first-cycle reviewer launch.",
+  "reviewer_findings": "Reviewer lane started before implementation and did not block parallel work.",
+  "repeated_failures": "No repeated command failures in the fixture.",
+  "learning_candidates": "1 prompt/validation adjustment represented by this fixture.",
+  "auto_applied": "First-cycle reviewer rule tightened and validated.",
+  "shadowed": "0 shadowed candidates.",
+  "rejected": "0 rejected candidates.",
+  "next_run_adjustments": "For every 1h+ run, start reviewer in cycle 1 before implementation and continue work in parallel."
+}

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.9
+
+- Tightened 1h+ timed-run reviewer behavior: Codex must start a read-only reviewer
+  lane after minimal orientation and before the first implementation edit.
+- Required the first progress update for 1h+ runs to state whether the reviewer was
+  started, which reviewer type was used, or why an independent reviewer was
+  unavailable.
+- Updated long-run fixture validation so reviewer launch is visible in the first
+  cycle instead of being deferred until later implementation work.
+
 ## 0.1.8
 
 - Added deterministic learning promotion tooling with validation, global install,

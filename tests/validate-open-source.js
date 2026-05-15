@@ -106,6 +106,10 @@ const requiredFiles = [
   "examples/long-run-simulation/codex-app-active-runs/medium-dashboard-hardening/promotion-report.json",
   "examples/long-run-simulation/codex-app-active-runs/medium-dashboard-hardening/promotion-report.md",
   "examples/long-run-simulation/codex-app-active-runs/medium-dashboard-hardening/run-retrospective.json",
+  "examples/long-run-simulation/codex-app-active-runs/three-hour-first-cycle-reviewer/run-state.json",
+  "examples/long-run-simulation/codex-app-active-runs/three-hour-first-cycle-reviewer/progress.md",
+  "examples/long-run-simulation/codex-app-active-runs/three-hour-first-cycle-reviewer/progress.jsonl",
+  "examples/long-run-simulation/codex-app-active-runs/three-hour-first-cycle-reviewer/run-retrospective.json",
   "examples/medium-project/README.md",
   "examples/medium-project/package.json",
   "examples/medium-project/src/policy.js",
@@ -197,8 +201,14 @@ const compactAgentsMd = agentsMd.replace(/\s+/g, " ");
 const compactSkillMd = skillMd.replace(/\s+/g, " ");
 assert.ok(compactAgentsMd.includes("1 hour or more"));
 assert.ok(compactAgentsMd.includes("explicit user authorization"));
+assert.ok(compactAgentsMd.includes("before the first implementation edit"));
+assert.ok(compactAgentsMd.includes("reviewer_started"));
+assert.ok(compactAgentsMd.includes("review scope"));
 assert.ok(compactSkillMd.includes("1 hour or more is explicit"));
 assert.ok(compactSkillMd.includes("start at least one read-only reviewer"));
+assert.ok(compactSkillMd.includes("first cycle, before the first implementation edit"));
+assert.ok(compactSkillMd.includes("reviewer_started"));
+assert.ok(compactSkillMd.includes("continue implementation in parallel"));
 assert.ok(skillMd.includes("Reviewer authorization:"));
 assert.ok(compactSkillMd.includes("user explicitly authorizes read-only reviewer subagents"));
 assert.ok(compactAgentsMd.includes("autonomous learning artifacts"));
@@ -234,6 +244,8 @@ assert.ok(readme.includes("Autonomous Execution Stack"));
 assert.ok(readme.includes("Autonomous Learning Loop"));
 assert.ok(readme.includes("What This Adds"));
 assert.ok(readme.includes("CLI/local runner"));
+assert.ok(readme.includes("from the start of the run"));
+assert.ok(readme.includes("before the first implementation edit"));
 assert.ok(readme.includes("every promoted learning iteration also syncs"));
 assert.ok(readme.includes("Deterministic Promotion"));
 assert.ok(readme.includes("中文"));

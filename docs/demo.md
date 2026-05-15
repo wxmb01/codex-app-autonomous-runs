@@ -31,7 +31,8 @@ use a read-only project completeness reviewer before final readiness.
 ```
 
 For runs of 1 hour or more, the duration request itself authorizes a read-only
-reviewer subagent after orientation.
+reviewer subagent from the start of the run. After only minimal preflight, Codex
+must start that reviewer before the first implementation edit.
 
 ## 4. Expected Run Files
 

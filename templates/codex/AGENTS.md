@@ -35,6 +35,11 @@ Default behavior:
 - Treat any explicit timed autonomous project run of 1 hour or more as explicit user
   authorization to start read-only reviewer subagents for review work. Do not wait
   for separate wording such as "start a subagent" or "parallel agent".
+- For any 1 hour or longer timed/App-only run, start the reviewer lane immediately
+  after minimal orientation and before the first implementation edit. The first
+  progress update must state `reviewer_started`, the reviewer type, and the assigned
+  review scope. Only use `independent_reviewer_skipped_reason` when the subagent tool
+  is unavailable.
 - For medium or large projects, always use a read-only `project_completeness_reviewer`
   subagent to review completeness, validation gaps, architecture risks, docs drift,
   and unresolved blockers. Main-agent self-review alone is not enough.
