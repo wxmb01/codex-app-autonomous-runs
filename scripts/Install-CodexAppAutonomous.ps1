@@ -153,6 +153,42 @@ function Merge-AgentsMd {
     }
 }
 
+function Test-ManagedHookEntry {
+    param([object]$Entry)
+    $text = $Entry | ConvertTo-Json -Depth 20 -Compress
+    return $text.Contains("pre_tool_use_policy.py") -or $text.Contains("stop_continue_guard.py")
+}
+
+function Merge-HooksJson {
+    param(
+        [string]$ExistingJson,
+        [string]$ManagedJson
+    )
+    try {
+        $existing = $ExistingJson | ConvertFrom-Json
+        $managed = $ManagedJson | ConvertFrom-Json
+    } catch {
+        return $null
+    }
+    if (-not $existing.hooks) {
+        return $null
+    }
+    foreach ($managedEvent in $managed.hooks.PSObject.Properties) {
+        $eventName = $managedEvent.Name
+        $managedEntries = @($managedEvent.Value)
+        $existingEvent = $existing.hooks.PSObject.Properties | Where-Object { $_.Name -eq $eventName } | Select-Object -First 1
+        $currentEntries = if ($existingEvent) { @($existingEvent.Value) } else { @() }
+        $keptEntries = @($currentEntries | Where-Object { -not (Test-ManagedHookEntry -Entry $_) })
+        $nextEntries = @($keptEntries) + @($managedEntries)
+        if ($existingEvent) {
+            $existingEvent.Value = $nextEntries
+        } else {
+            $existing.hooks | Add-Member -NotePropertyName $eventName -NotePropertyValue $nextEntries
+        }
+    }
+    return ($existing | ConvertTo-Json -Depth 20) + "`n"
+}
+
 if ($PSCmdlet.ShouldProcess($codexHomeResolved, "install Codex App autonomous run templates")) {
     Add-Report "target: $codexHomeResolved"
     if (-not $DryRun) {
@@ -174,12 +210,22 @@ if ($PSCmdlet.ShouldProcess($codexHomeResolved, "install Codex App autonomous ru
     $escapedHome = $codexHomeResolved.Replace("\", "\\")
     $hooksJson = $hooksTemplate.Replace("{{CODEX_HOME_WINDOWS_ESCAPED}}", $escapedHome)
     $hooksPath = Join-Path $codexHomeResolved "hooks.json"
+    $hooksKind = "generated"
+    if ($Merge -and (Test-Path -LiteralPath $hooksPath)) {
+        $mergedHooks = Merge-HooksJson -ExistingJson (Get-Content -LiteralPath $hooksPath -Raw) -ManagedJson $hooksJson
+        if ($mergedHooks) {
+            $hooksJson = $mergedHooks
+            $hooksKind = "merged-json"
+        } else {
+            Add-Report "replace unparsable or invalid hooks.json: $hooksPath"
+        }
+    }
     if ((Test-Path -LiteralPath $hooksPath) -and -not $Force) {
         Backup-IfExists -Path $hooksPath
     }
-    Add-Report "render hooks.json: $hooksPath"
+    Add-Report "$(@{ $true = 'merge'; $false = 'render' }[$hooksKind -eq 'merged-json']) hooks.json: $hooksPath"
     Ensure-Parent -Path $hooksPath
-    Add-ManifestFile -Path $hooksPath -Hash (Get-Sha256Text -Text $hooksJson) -Kind "generated"
+    Add-ManifestFile -Path $hooksPath -Hash (Get-Sha256Text -Text $hooksJson) -Kind $hooksKind
     if (-not $DryRun) {
         Write-Utf8NoBom -Path $hooksPath -Text $hooksJson
     }

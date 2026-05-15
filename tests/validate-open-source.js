@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
@@ -147,6 +147,11 @@ const changelog = read(join(repoRoot, "CHANGELOG.md"));
 const topChangelogVersion = changelog.match(/^##\s+([0-9]+\.[0-9]+\.[0-9]+)/m)?.[1];
 assert.equal(packageJson.private, false);
 assert.equal(packageJson.version, topChangelogVersion);
+assert.equal(packageJson.repository.url, "git+https://github.com/wxmb01/codex-app-autonomous-runs.git");
+assert.ok(packageJson.bugs.url.includes("/issues"));
+assert.ok(packageJson.homepage.includes("codex-app-autonomous-runs#readme"));
+assert.ok(packageJson.files.includes("templates/"));
+assert.ok(packageJson.files.includes("scripts/"));
 assert.ok(packageJson.scripts["install:dry-run"]);
 assert.ok(packageJson.scripts["uninstall:dry-run"]);
 assert.ok(packageJson.scripts["test:example"]);
@@ -344,20 +349,72 @@ assert.equal(existsSync(manifestPath), false);
 assert.equal(existsSync(join(installHomeReal, "skills/timed-autonomous-run/SKILL.md")), false);
 assert.equal(existsSync(join(installHomeReal, "skills/timed-autonomous-run")), false);
 
+const installHomeMerge = mkdtempSync(join(tmpdir(), "codex-hooks-merge-"));
+const customHooks = {
+  hooks: {
+    PreToolUse: [
+      {
+        matcher: "CustomTool",
+        hooks: [{ type: "command", command: "echo custom-pre" }]
+      }
+    ],
+    Stop: [
+      {
+        matcher: "CustomStop",
+        hooks: [{ type: "command", command: "echo custom-stop" }]
+      }
+    ]
+  }
+};
+writeFileSync(join(installHomeMerge, "hooks.json"), `${JSON.stringify(customHooks, null, 2)}\n`, "utf8");
+execFileSync("node", [
+  join(repoRoot, "scripts/install.mjs"),
+  "--merge",
+  `--codex-home=${installHomeMerge}`
+], { encoding: "utf8" });
+const mergedManifest = JSON.parse(read(join(installHomeMerge, "codex-app-autonomous-manifest.json")));
+assert.ok(mergedManifest.files.some((file) => file.path === "hooks.json" && file.kind === "merged-json"));
+const mergedHooks = JSON.parse(read(join(installHomeMerge, "hooks.json")));
+assert.ok(JSON.stringify(mergedHooks).includes("echo custom-pre"));
+assert.ok(JSON.stringify(mergedHooks).includes("pre_tool_use_policy.py"));
+assert.ok(JSON.stringify(mergedHooks).includes("stop_continue_guard.py"));
+execFileSync("node", [
+  join(repoRoot, "scripts/uninstall.mjs"),
+  `--codex-home=${installHomeMerge}`
+], { encoding: "utf8" });
+const preservedHooks = JSON.parse(read(join(installHomeMerge, "hooks.json")));
+const preservedText = JSON.stringify(preservedHooks);
+assert.ok(preservedText.includes("echo custom-pre"));
+assert.ok(preservedText.includes("echo custom-stop"));
+assert.equal(preservedText.includes("pre_tool_use_policy.py"), false);
+assert.equal(preservedText.includes("stop_continue_guard.py"), false);
+
 const installHomeDryRun = mkdtempSync(join(tmpdir(), "codex-uninstall-dry-run-"));
 execFileSync("node", [
   join(repoRoot, "scripts/install.mjs"),
   "--merge",
   `--codex-home=${installHomeDryRun}`
 ], { encoding: "utf8" });
-execFileSync("node", [
+const dryRunUninstallOutput = execFileSync("node", [
   join(repoRoot, "scripts/uninstall.mjs"),
   "--dry-run",
   `--codex-home=${installHomeDryRun}`
 ], { encoding: "utf8" });
+assert.equal(dryRunUninstallOutput.includes("remove empty directory"), false);
 assert.ok(existsSync(join(installHomeDryRun, "skills/timed-autonomous-run/SKILL.md")));
 assert.ok(existsSync(join(installHomeDryRun, "skills/timed-autonomous-run")));
 assert.ok(existsSync(join(installHomeDryRun, "codex-app-autonomous-manifest.json")));
+
+const packCommand = process.platform === "win32" ? "npm.cmd pack --dry-run --json" : "npm pack --dry-run --json";
+const packOutput = JSON.parse(execSync(packCommand, {
+  cwd: repoRoot,
+  encoding: "utf8"
+}))[0];
+const packedFiles = packOutput.files.map((file) => file.path);
+assert.ok(packedFiles.includes("templates/codex/skills/timed-autonomous-run/SKILL.md"));
+assert.ok(packedFiles.includes("tests/validate-rules.js"));
+assert.ok(packedFiles.includes(".github/workflows/validate.yml"));
+assert.equal(packedFiles.some((file) => file.includes(".codex/app-active-runs")), false);
 
 const exampleOutput = execFileSync("node", [join(repoRoot, "examples/medium-project/tests/validate.js")], {
   encoding: "utf8"

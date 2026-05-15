@@ -77,6 +77,10 @@ function uninstallFromManifest(manifest) {
       removeManagedBlock(full);
       continue;
     }
+    if (entry.kind === "merged-json" && entry.path === "hooks.json") {
+      removeManagedHooks(full);
+      continue;
+    }
     const currentHash = sha256File(full);
     if (currentHash !== entry.sha256) {
       console.log(`- skip modified/user-owned: ${full}`);
@@ -113,12 +117,55 @@ function cleanupEmptyDirs() {
     const full = targetPath(dir);
     if (!existsSync(full)) continue;
     try {
+      if (readdirSync(full).length > 0) continue;
       console.log(`- remove empty directory: ${full}`);
       if (!dryRun) rmdirSync(full);
     } catch {
       // Directory contains user-owned files or is otherwise not removable.
     }
   }
+}
+
+function isManagedHookEntry(entry) {
+  const text = JSON.stringify(entry);
+  return text.includes("pre_tool_use_policy.py") || text.includes("stop_continue_guard.py");
+}
+
+function removeManagedHooks(full) {
+  let parsed;
+  try {
+    parsed = JSON.parse(readFileSync(full, "utf8"));
+  } catch {
+    console.log(`- skip unparsable hooks.json: ${full}`);
+    return;
+  }
+  const hooks = parsed.hooks && typeof parsed.hooks === "object" ? parsed.hooks : {};
+  let removed = 0;
+  for (const [eventName, entries] of Object.entries(hooks)) {
+    if (!Array.isArray(entries)) continue;
+    const kept = entries.filter((entry) => {
+      const managed = isManagedHookEntry(entry);
+      if (managed) removed += 1;
+      return !managed;
+    });
+    if (kept.length) {
+      hooks[eventName] = kept;
+    } else {
+      delete hooks[eventName];
+    }
+  }
+  if (!removed) {
+    console.log(`- skip hooks.json without managed entries: ${full}`);
+    return;
+  }
+  const remainingTopLevel = Object.keys(parsed).filter((key) => key !== "hooks");
+  if (Object.keys(hooks).length === 0 && remainingTopLevel.length === 0) {
+    removePath(full, "remove hooks.json with only managed entries");
+    return;
+  }
+  parsed.hooks = hooks;
+  console.log(`- remove managed hooks from hooks.json: ${full}`);
+  if (!dryRun) writeFileSync(full, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
 }
 
 console.log("# Codex App Autonomous Uninstall Plan\n");

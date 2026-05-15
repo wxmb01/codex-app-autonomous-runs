@@ -88,13 +88,47 @@ function copyTree(sourceDir, destDir) {
 function renderHooks() {
   const template = readFileSync(join(templateRoot, "hooks.json.template"), "utf8");
   const escaped = codexHome.replaceAll("\\", "\\\\");
-  const output = template.replaceAll("{{CODEX_HOME_WINDOWS_ESCAPED}}", escaped);
+  const rendered = template.replaceAll("{{CODEX_HOME_WINDOWS_ESCAPED}}", escaped);
   const dest = join(codexHome, "hooks.json");
   if (existsSync(dest) && !force) backup(dest);
-  report.push(`render hooks.json: ${dest}`);
+  const existing = merge && existsSync(dest) ? readExistingHooks(dest) : null;
+  const output = existing ? JSON.stringify(mergeHooks(existing, JSON.parse(rendered)), null, 2) + "\n" : rendered;
+  report.push(`${existing ? "merge" : "render"} hooks.json: ${dest}`);
   ensureParent(dest);
-  remember(dest, sha256Text(output), "generated");
+  remember(dest, sha256Text(output), existing ? "merged-json" : "generated");
   if (!dryRun) writeFileSync(dest, output, "utf8");
+}
+
+function readExistingHooks(path) {
+  try {
+    const parsed = JSON.parse(readFileSync(path, "utf8"));
+    if (parsed && typeof parsed === "object" && parsed.hooks && typeof parsed.hooks === "object") {
+      return parsed;
+    }
+    report.push(`replace invalid hooks.json shape: ${path}`);
+    return null;
+  } catch {
+    report.push(`replace unparsable hooks.json: ${path}`);
+    return null;
+  }
+}
+
+function isManagedHookEntry(entry) {
+  const text = JSON.stringify(entry);
+  return text.includes("pre_tool_use_policy.py") || text.includes("stop_continue_guard.py");
+}
+
+function mergeHooks(existing, managed) {
+  const next = structuredClone(existing);
+  next.hooks ??= {};
+  for (const [eventName, entries] of Object.entries(managed.hooks ?? {})) {
+    const current = Array.isArray(next.hooks[eventName]) ? next.hooks[eventName] : [];
+    next.hooks[eventName] = [
+      ...current.filter((entry) => !isManagedHookEntry(entry)),
+      ...entries
+    ];
+  }
+  return next;
 }
 
 function installAgentsMd() {

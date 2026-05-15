@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.4
+
+- Changed `--merge` installers to merge managed Codex hooks into existing
+  `hooks.json` instead of overwriting user hooks.
+- Changed uninstall to remove only managed hook entries from merged `hooks.json`.
+- Fixed Node uninstall dry-run directory cleanup reporting so dry-run does not
+  claim empty-directory removals for non-empty directories.
+- Added package metadata and an explicit npm package file allowlist.
+- Expanded CI validation to Windows and Ubuntu.
+
 ## 0.1.3
 
 - Added explicit reviewer-subagent authorization to the timed automation prompt

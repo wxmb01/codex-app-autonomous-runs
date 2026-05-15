@@ -73,6 +73,56 @@ function Remove-ManagedAgentsBlock {
     }
 }
 
+function Test-ManagedHookEntry {
+    param([object]$Entry)
+    $text = $Entry | ConvertTo-Json -Depth 20 -Compress
+    return $text.Contains("pre_tool_use_policy.py") -or $text.Contains("stop_continue_guard.py")
+}
+
+function Remove-ManagedHooks {
+    param([string]$Path)
+    try {
+        $parsed = Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json
+    } catch {
+        Write-Output "- skip unparsable hooks.json: $Path"
+        return
+    }
+    if (-not $parsed.hooks) {
+        Write-Output "- skip hooks.json without hooks object: $Path"
+        return
+    }
+    $removed = 0
+    foreach ($eventName in @($parsed.hooks.PSObject.Properties.Name)) {
+        $property = $parsed.hooks.PSObject.Properties | Where-Object { $_.Name -eq $eventName } | Select-Object -First 1
+        $kept = New-Object System.Collections.Generic.List[object]
+        foreach ($entry in @($property.Value)) {
+            if (Test-ManagedHookEntry -Entry $entry) {
+                $removed += 1
+            } else {
+                $kept.Add($entry) | Out-Null
+            }
+        }
+        if ($kept.Count -gt 0) {
+            $property.Value = $kept.ToArray()
+        } else {
+            $parsed.hooks.PSObject.Properties.Remove($eventName)
+        }
+    }
+    if ($removed -eq 0) {
+        Write-Output "- skip hooks.json without managed entries: $Path"
+        return
+    }
+    $topLevel = @($parsed.PSObject.Properties.Name | Where-Object { $_ -ne "hooks" })
+    if (($parsed.hooks.PSObject.Properties.Count -eq 0) -and ($topLevel.Count -eq 0)) {
+        Remove-ManagedPath -Path $Path -Reason "remove hooks.json with only managed entries"
+        return
+    }
+    Write-Output "- remove managed hooks from hooks.json: $Path"
+    if (-not $DryRun -and $PSCmdlet.ShouldProcess($Path, "remove managed hooks from hooks.json")) {
+        [System.IO.File]::WriteAllText($Path, (($parsed | ConvertTo-Json -Depth 20) + "`n"), [System.Text.UTF8Encoding]::new($false))
+    }
+}
+
 function Uninstall-FromManifest {
     param([object]$Manifest)
     $entries = @($Manifest.files) | Sort-Object { $_.path.Length } -Descending
@@ -83,6 +133,10 @@ function Uninstall-FromManifest {
         }
         if (($entry.kind -eq "managed-block") -and ($entry.path -eq "AGENTS.md")) {
             Remove-ManagedAgentsBlock -Path $full
+            continue
+        }
+        if (($entry.kind -eq "merged-json") -and ($entry.path -eq "hooks.json")) {
+            Remove-ManagedHooks -Path $full
             continue
         }
         $currentHash = Get-Sha256File -Path $full

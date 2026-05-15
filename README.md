@@ -133,8 +133,9 @@ Remove installed files:
 ```
 
 Installers write `codex-app-autonomous-manifest.json` into your Codex home.
-Uninstall uses that manifest and file hashes to remove only matching managed files.
-Modified or user-owned `hooks.json` is preserved.
+With `-Merge` or `--merge`, existing `hooks.json` entries are preserved and this
+project's managed hooks are appended or replaced. Uninstall removes only matching
+managed files and managed hook entries.
 
 ## Usage
 

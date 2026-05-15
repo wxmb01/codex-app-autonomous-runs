@@ -33,5 +33,5 @@ Set the active run's `run-state.json` to `status: "blocked"` or `status:
 ## Why does uninstall keep some files?
 
 Install writes a manifest with SHA-256 hashes for managed files. Uninstall removes
-matching managed files and the managed `AGENTS.md` block, but it preserves modified
-or user-owned files such as a customized `hooks.json`.
+matching managed files, the managed `AGENTS.md` block, and this project's managed
+hook entries. It preserves user-owned files and custom `hooks.json` entries.

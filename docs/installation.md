@@ -19,8 +19,9 @@
 ```
 
 The installer copies templates into your Codex home, backs up existing files that
-would be replaced, renders `hooks.json` with your local Codex home path, and writes
-`codex-app-autonomous-manifest.json` with hashes for managed files.
+would be replaced, merges managed entries into `hooks.json` when `-Merge` or
+`--merge` is used, and writes `codex-app-autonomous-manifest.json` with hashes for
+managed files.
 
 After installing, open Codex App settings and trust the installed hooks.
 
@@ -46,8 +47,8 @@ node scripts/uninstall.mjs
 ```
 
 Uninstall uses the manifest and SHA-256 hashes to remove only matching managed
-files. If `hooks.json` has been modified or no manifest is available, it is
-preserved as user-owned configuration.
+files. For merged `hooks.json`, it removes only this project's managed hook entries
+and preserves user-owned hook entries.
 
 ## Validate This Repository
 
