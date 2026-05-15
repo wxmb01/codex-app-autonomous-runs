@@ -29,3 +29,9 @@ the latest progress event.
 Set the active run's `run-state.json` to `status: "blocked"` or `status:
 "completed"` and record `stop_reason`. The Stop hook only continues runs with
 `status: "running"` and `stop_guard: true`.
+
+## Why does uninstall keep some files?
+
+Install writes a manifest with SHA-256 hashes for managed files. Uninstall removes
+matching managed files and the managed `AGENTS.md` block, but it preserves modified
+or user-owned files such as a customized `hooks.json`.

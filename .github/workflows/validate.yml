@@ -24,4 +24,4 @@ jobs:
           python-version: "3.12"
 
       - name: Validate templates
-        run: npm test
+        run: npm run test:all

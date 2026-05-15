@@ -175,6 +175,11 @@ Context:
 - Duration: <requested duration, cadence, total_cycles, and COUNT>.
 - Project facts from preflight: <Git status, stack, important files, likely commands>.
 
+Reviewer authorization:
+- If the requested duration is 1 hour or more, the user explicitly authorizes
+  read-only reviewer subagents. Start at least one reviewer after orientation and
+  before the first major readiness claim.
+
 Constraints:
 - Operate in the target project path. If the current thread/workspace is different,
   use the absolute target path explicitly and verify it before editing.
@@ -189,6 +194,8 @@ Done when:
   user input.
 - Progress log records total_cycles, completed_cycles, last_cycle_at, stop_reason,
   commands run, validation result, review result, and next step.
+- For runs of 1 hour or more, progress log records reviewer events, findings
+  addressed, and any independent reviewer skip reason.
 
 Per-cycle loop:
 1. Re-read latest user request and project context.
@@ -377,13 +384,14 @@ Mention any lockfile changes in the cycle status and final report.
 Global rules and hooks are installed for high-automation safety:
 
 - `$CODEX_HOME/rules/autonomous-safety.rules` blocks especially dangerous
-  publication, production/infrastructure, destructive database, credential, and broad
-  destructive filesystem commands.
+  publication, deployment/infrastructure, direct destructive database command
+  prefixes, credential, and broad destructive filesystem commands.
 - `$CODEX_HOME/hooks/pre_tool_use_policy.py` denies autonomous writes to
   secrets/key files. The default high-automation hook is
   attached only to write/patch tools; command blocking is handled by
   `$CODEX_HOME/rules/autonomous-safety.rules` to avoid per-command Python startup
-  overhead.
+  overhead. The rules file is prefix-based, so it is intentionally fast and narrow;
+  it does not parse arbitrary SQL embedded inside quoted command arguments.
 - `$CODEX_HOME/hooks/stop_continue_guard.py` prevents an App-only active
   run from ending while `run-state.json.status = "running"` and
   `stop_guard = true`. It prefers `.codex/app-active-runs/current` and reads only

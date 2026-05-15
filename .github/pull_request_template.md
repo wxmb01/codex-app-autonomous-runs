@@ -4,7 +4,7 @@
 
 ## Validation
 
-- [ ] `npm test`
+- [ ] `npm run test:all`
 
 ## Safety Boundary
 

@@ -30,7 +30,7 @@ runner for continuous work.
 
 Codex App Autonomous Runs 是一套面向 Codex App 的全局配置模板，用来支持长时间、持续推进的自主项目运行。
 
-它的目标是在不牺牲安全边界的前提下提高自动化率：常规开发、测试、构建、提交、分支推送和 PR 创建可以持续进行，只有发布、生产部署、基础设施变更、递归强删、密钥写入等特别高风险操作才会触发人工确认。
+它的目标是在不牺牲安全边界的前提下提高自动化率：常规开发、测试、构建、提交、分支推送和 PR 创建可以持续进行，只有发布、生产部署、基础设施变更、递归强删、密钥写入等特别高风险操作才触发人工确认。
 
 这个项目坚持 Codex App 优先，不依赖 CLI 或本地 runner 来实现持续工作。
 
@@ -68,13 +68,13 @@ Allowed by default:
 Blocked by default:
 
 - package publishing
-- production deploys
+- deploys and production deploys
 - infrastructure changes
 - Kubernetes/Helm changes
 - destructive Git cleanup
 - recursive force deletion
 - secrets/private key writes
-- destructive database operations
+- direct destructive database command prefixes
 
 ## Install
 
@@ -110,12 +110,12 @@ Then open Codex App settings and trust the installed hooks.
 ## Validate
 
 ```powershell
-npm test
-npm run bench:hooks
+npm run test:all
 ```
 
-The test verifies that templates are self-contained, hooks allow normal commands,
-hooks block dangerous commands, and no personal paths or obvious secrets are present.
+The full validation checks template completeness, safety-rule semantics, example
+projects, fixture behavior, hook performance, and obvious secret or personal-path
+leaks.
 
 ## Uninstall
 
@@ -131,6 +131,10 @@ Remove installed files:
 ```powershell
 .\scripts\Uninstall-CodexAppAutonomous.ps1
 ```
+
+Installers write `codex-app-autonomous-manifest.json` into your Codex home.
+Uninstall uses that manifest and file hashes to remove only matching managed files.
+Modified or user-owned `hooks.json` is preserved.
 
 ## Usage
 

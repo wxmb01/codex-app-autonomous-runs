@@ -101,7 +101,20 @@ def progress_ready(run_dir):
         event = json.loads(line)
     except Exception:
         return False, "latest progress.jsonl event is not valid JSON"
-    required = ["timestamp", "cycle", "task", "commands", "validation", "reviewer", "blocker", "next_step"]
+    required = [
+        "timestamp",
+        "cycle",
+        "phase",
+        "elapsed_minutes",
+        "task",
+        "files_changed",
+        "commands",
+        "validation",
+        "self_review",
+        "reviewer",
+        "blocker",
+        "next_step",
+    ]
     missing = [key for key in required if key not in event]
     if missing:
         return False, "latest progress event missing: " + ", ".join(missing)

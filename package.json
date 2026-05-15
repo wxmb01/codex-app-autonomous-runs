@@ -1,13 +1,15 @@
 {
   "name": "codex-app-autonomous-runs",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": false,
   "type": "module",
   "description": "Codex App configuration templates for long active autonomous project runs with review lanes and narrow safety guardrails.",
   "scripts": {
     "test": "node tests/validate-open-source.js",
     "lint": "node tests/validate-open-source.js",
+    "test:rules": "node tests/validate-rules.js",
     "test:example": "npm --prefix examples/medium-project test",
+    "test:all": "npm test && npm run test:rules && npm run test:example && npm --prefix codex-app-final-fixture test && npm run bench:hooks -- --iterations=10 --max-avg-ms=250",
     "install:dry-run": "node scripts/install.mjs --dry-run --merge",
     "uninstall:dry-run": "node scripts/uninstall.mjs --dry-run",
     "bench:hooks": "node scripts/bench-hooks.mjs"

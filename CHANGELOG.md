@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.3
+
+- Added explicit reviewer-subagent authorization to the timed automation prompt
+  template for runs of 1 hour or more.
+- Added semantic validation for `autonomous-safety.rules`.
+- Added `npm run test:all` and moved GitHub Actions validation to the full suite.
+- Made the final fixture self-contained by installing templates into a temporary
+  Codex home during validation.
+- Expanded fast prefix rules for deployment variants and direct destructive database
+  command forms without attaching the Python hook to every shell command.
+- Tightened the Stop hook so active-run progress events must satisfy the published
+  progress-event required fields.
+- Added installer manifests with SHA-256 hashes and safer uninstall behavior that
+  preserves modified or user-owned `hooks.json`.
+- Replaced hard-coded release validation with package-vs-changelog version checks.
+- Fixed the bilingual README text and documented safe uninstall behavior.
+
 ## 0.1.2
 
 - Clarified that timed autonomous project runs of 1 hour or more explicitly authorize

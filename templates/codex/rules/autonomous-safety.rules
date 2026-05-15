@@ -32,10 +32,15 @@ prefix_rule(pattern=["tofu", "destroy"], decision="forbidden")
 prefix_rule(pattern=["pulumi", "up"], decision="forbidden")
 prefix_rule(pattern=["pulumi", "destroy"], decision="forbidden")
 
-prefix_rule(pattern=["vercel", "deploy", "--prod"], decision="forbidden")
-prefix_rule(pattern=["netlify", "deploy", "--prod"], decision="forbidden")
+prefix_rule(pattern=["vercel", "deploy"], decision="forbidden")
+prefix_rule(pattern=["netlify", "deploy"], decision="forbidden")
 prefix_rule(pattern=["firebase", "deploy"], decision="forbidden")
 prefix_rule(pattern=["wrangler", "deploy"], decision="forbidden")
+
+prefix_rule(pattern=["drop", "database"], decision="forbidden")
+prefix_rule(pattern=["drop", "schema"], decision="forbidden")
+prefix_rule(pattern=["truncate", "table"], decision="forbidden")
+prefix_rule(pattern=["delete", "from"], decision="forbidden")
 
 prefix_rule(pattern=["rm", "-rf"], decision="forbidden")
 prefix_rule(pattern=["Remove-Item", "-Recurse", "-Force"], decision="forbidden")
