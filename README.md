@@ -1,5 +1,14 @@
 # Codex App Autonomous Runs
 
+![Codex App Autonomous Runs promotional banner](docs/assets/promo-en.png)
+
+<details>
+<summary>中文宣传图</summary>
+
+![Codex App Autonomous Runs 中文宣传图](docs/assets/promo-zh.png)
+
+</details>
+
 Codex App configuration templates for long active autonomous project runs.
 
 The goal is high automation without turning every step into a permission prompt:
