@@ -781,6 +781,7 @@ const promotionDryRun = execFileSync("node", [
   "--dry-run",
   "--allow-no-changes",
   "--allow-branch",
+  "--promotion-category=documentation",
   `--report-dir=${promotionDryRunDir}`,
   "--reviewer-result=open-source-test-reviewer"
 ], { encoding: "utf8" });
