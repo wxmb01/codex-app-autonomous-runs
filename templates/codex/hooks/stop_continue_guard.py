@@ -33,19 +33,58 @@ def latest_running_state(cwd):
     runs = root / ".codex" / "app-active-runs"
     if not runs.exists():
         return None, None
-    candidates = sorted(
-        runs.glob("*/run-state.json"),
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
-    for state_path in candidates:
+
+    current = runs / "current"
+    if current.exists():
         try:
-            state = json.loads(state_path.read_text(encoding="utf-8-sig"))
+            current_name = current.read_text(encoding="utf-8-sig").strip()
+            current_state = runs / current_name / "run-state.json"
+            state = read_state(current_state)
+            if state and state.get("status") == "running" and state.get("stop_guard") is True:
+                return current_state, state
+        except Exception:
+            pass
+
+    newest = None
+    newest_mtime = -1.0
+    for state_path in runs.glob("*/run-state.json"):
+        try:
+            mtime = state_path.stat().st_mtime
         except Exception:
             continue
-        if state.get("status") == "running" and state.get("stop_guard") is True:
-            return state_path, state
+        if mtime > newest_mtime:
+            newest = state_path
+            newest_mtime = mtime
+    if newest:
+        state = read_state(newest)
+        if state and state.get("status") == "running" and state.get("stop_guard") is True:
+            return newest, state
     return None, None
+
+
+def read_state(state_path):
+    try:
+        return json.loads(state_path.read_text(encoding="utf-8-sig"))
+    except Exception:
+        return None
+
+
+def last_nonempty_line(path):
+    chunk_size = 4096
+    buffer = b""
+    with path.open("rb") as handle:
+        handle.seek(0, os.SEEK_END)
+        position = handle.tell()
+        while position > 0:
+            read_size = min(chunk_size, position)
+            position -= read_size
+            handle.seek(position)
+            buffer = handle.read(read_size) + buffer
+            lines = buffer.splitlines()
+            for line in reversed(lines):
+                if line.strip():
+                    return line.decode("utf-8-sig")
+    return ""
 
 
 def progress_ready(run_dir):
@@ -56,10 +95,10 @@ def progress_ready(run_dir):
     if not progress_jsonl.exists():
         return False, "missing progress.jsonl"
     try:
-        lines = [line for line in progress_jsonl.read_text(encoding="utf-8-sig").splitlines() if line.strip()]
-        if not lines:
+        line = last_nonempty_line(progress_jsonl)
+        if not line:
             return False, "progress.jsonl has no cycle events"
-        event = json.loads(lines[-1])
+        event = json.loads(line)
     except Exception:
         return False, "latest progress.jsonl event is not valid JSON"
     required = ["timestamp", "cycle", "task", "commands", "validation", "reviewer", "blocker", "next_step"]

@@ -1,11 +1,11 @@
 # Codex App Autonomous Runs
 
-![Codex App Autonomous Runs promotional banner](docs/assets/promo-en.png)
+![Codex App Autonomous Runs promotional banner](docs/assets/promo-en.webp)
 
 <details>
 <summary>中文宣传图</summary>
 
-![Codex App Autonomous Runs 中文宣传图](docs/assets/promo-zh.png)
+![Codex App Autonomous Runs 中文宣传图](docs/assets/promo-zh.webp)
 
 </details>
 
@@ -44,6 +44,7 @@ Codex App Autonomous Runs 是一套面向 Codex App 的全局配置模板，用�
   - `run-state.json`
   - `progress.md`
   - `progress.jsonl`
+  - `current`
 - Read-only reviewer agents:
   - `project_completeness_reviewer`
   - `autonomous_reviewer`
@@ -110,6 +111,7 @@ Then open Codex App settings and trust the installed hooks.
 
 ```powershell
 npm test
+npm run bench:hooks
 ```
 
 The test verifies that templates are self-contained, hooks allow normal commands,

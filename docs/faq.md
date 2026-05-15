@@ -18,9 +18,11 @@ production deploys, infrastructure changes, destructive cleanup, and secrets.
 
 ## Do hooks slow Codex down?
 
-The PreToolUse hook runs a small local Python string check. The Stop hook runs only
-when Codex is about to stop. Normal tests, builds, edits, previews, and reviewer
-work dominate runtime.
+The default `PreToolUse` hook is attached only to write/patch tools so normal
+shell commands do not pay per-command Python startup cost. Dangerous shell
+commands are covered by the installed rules file. The Stop hook runs only when
+Codex is about to stop, prefers `.codex/app-active-runs/current`, and reads only
+the latest progress event.
 
 ## How do I pause or stop a run?
 

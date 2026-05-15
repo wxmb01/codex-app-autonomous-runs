@@ -68,7 +68,9 @@ const requiredFiles = [
   "docs/assets/hooks-trust.svg",
   "docs/assets/promo-background-image2.png",
   "docs/assets/promo-en.png",
+  "docs/assets/promo-en.webp",
   "docs/assets/promo-zh.png",
+  "docs/assets/promo-zh.webp",
   "docs/demo.md",
   "docs/faq.md",
   "docs/permissions.md",
@@ -76,6 +78,7 @@ const requiredFiles = [
   "docs/open-source-readiness.md",
   "scripts/Install-CodexAppAutonomous.ps1",
   "scripts/Uninstall-CodexAppAutonomous.ps1",
+  "scripts/bench-hooks.mjs",
   "scripts/install.mjs",
   "scripts/uninstall.mjs",
   "examples/medium-project/README.md",
@@ -133,13 +136,17 @@ for (const file of textFiles) {
 
 const hooksTemplate = read(join(templateRoot, "hooks.json.template"));
 assert.ok(hooksTemplate.includes("{{CODEX_HOME_WINDOWS_ESCAPED}}"));
-JSON.parse(hooksTemplate.replaceAll("{{CODEX_HOME_WINDOWS_ESCAPED}}", "C:\\\\Users\\\\example\\\\.codex"));
+const renderedHooks = JSON.parse(hooksTemplate.replaceAll("{{CODEX_HOME_WINDOWS_ESCAPED}}", "C:\\\\Users\\\\example\\\\.codex"));
+const preToolMatcher = renderedHooks.hooks.PreToolUse.map((entry) => entry.matcher).join("|");
+assert.ok(preToolMatcher.includes("apply_patch"));
+assert.equal(/Bash|shell_command/.test(preToolMatcher), false);
 
 const packageJson = JSON.parse(read(join(repoRoot, "package.json")));
 assert.equal(packageJson.private, false);
 assert.ok(packageJson.scripts["install:dry-run"]);
 assert.ok(packageJson.scripts["uninstall:dry-run"]);
 assert.ok(packageJson.scripts["test:example"]);
+assert.ok(packageJson.scripts["bench:hooks"]);
 
 const agentFiles = [
   "autonomous_reviewer.toml",
@@ -183,6 +190,19 @@ for (const command of ["npm publish", "terraform apply", "kubectl delete pod x",
   assert.equal(out.decision, "deny", `${command} should be denied`);
 }
 
+assert.equal(runPython(preToolHook, {
+  tool_name: "apply_patch",
+  tool_input: {
+    patch: "*** Begin Patch\n*** Update File: docs/example.md\n@@\n+Mention npm publish in documentation.\n*** End Patch\n"
+  }
+}), "");
+assert.equal(JSON.parse(runPython(preToolHook, {
+  tool_name: "apply_patch",
+  tool_input: {
+    patch: "*** Begin Patch\n*** Add File: .env\n+EXAMPLE=value\n*** End Patch\n"
+  }
+})).decision, "deny");
+
 const stopHook = join(templateRoot, "hooks/stop_continue_guard.py");
 const completedRoot = mkdtempSync(join(tmpdir(), "codex-completed-"));
 const completedRun = join(completedRoot, ".codex/app-active-runs/done");
@@ -207,6 +227,7 @@ assert.equal(runPython(stopHook, { cwd: completedRoot, stop_hook_active: false }
 const runningRoot = mkdtempSync(join(tmpdir(), "codex-running-"));
 const runningRun = join(runningRoot, ".codex/app-active-runs/running");
 mkdirSync(runningRun, { recursive: true });
+writeFileSync(join(runningRoot, ".codex/app-active-runs/current"), "running");
 writeFileSync(join(runningRun, "run-state.json"), JSON.stringify({
   run_id: "running",
   target: runningRoot,
@@ -246,5 +267,12 @@ const exampleOutput = execFileSync("node", [join(repoRoot, "examples/medium-proj
   encoding: "utf8"
 });
 assert.ok(exampleOutput.includes("medium example validation passed"));
+
+const hookBenchOutput = execFileSync("node", [
+  join(repoRoot, "scripts/bench-hooks.mjs"),
+  "--iterations=2",
+  "--max-avg-ms=300"
+], { encoding: "utf8" });
+assert.ok(hookBenchOutput.includes("Hook benchmark passed"));
 
 console.log("open-source validation passed");

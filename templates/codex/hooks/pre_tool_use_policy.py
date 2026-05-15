@@ -37,6 +37,14 @@ def tool_text(event):
     return ""
 
 
+def is_command_tool(event):
+    name = str(event.get("tool_name", event.get("tool", ""))).lower()
+    if "bash" in name or "shell" in name:
+        return True
+    value = event.get("tool_input", event.get("input", {}))
+    return isinstance(value, dict) and any(key in value for key in ("command", "cmd", "script"))
+
+
 def dangerous_command_reason(text):
     normalized = compact(text)
     checks = [
@@ -70,9 +78,9 @@ def dangerous_command_reason(text):
 def secret_write_reason(text):
     lowered = text.lower()
     path_patterns = [
-        r"(^|\n)\*\*\* (add|update|delete) file: .*(^|[\\/])\.env(\.|$)",
+        r"(^|\n)\*\*\* (add|update|delete) file: (?:.*[\\/])?\.env(?:\.|$)",
         r"(^|\n)\*\*\* (add|update|delete) file: .*\.(pem|p12|pfx|key)$",
-        r"(^|\n)\*\*\* (add|update|delete) file: .*(^|[\\/])id_rsa$",
+        r"(^|\n)\*\*\* (add|update|delete) file: (?:.*[\\/])?id_rsa$",
         r"(^|\n)\*\*\* (add|update|delete) file: .*(^|[\\/])secrets?[\\/]",
     ]
     for pattern in path_patterns:
@@ -89,7 +97,9 @@ def main():
     if not text:
         return
 
-    reason = dangerous_command_reason(text) or secret_write_reason(text)
+    reason = secret_write_reason(text)
+    if is_command_tool(event):
+        reason = dangerous_command_reason(text) or reason
     if reason:
         emit_deny(reason)
 

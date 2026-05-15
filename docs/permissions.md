@@ -19,3 +19,7 @@ The blocked set is intentionally narrow:
 
 This preserves automation rate while still guarding against actions that are hard
 to recover from.
+
+For performance, command blocking is handled by the rules file, while the default
+`PreToolUse` hook is attached only to write/patch tools for secret and private-key
+write checks.

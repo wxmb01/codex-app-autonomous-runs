@@ -54,6 +54,8 @@ Execution rules:
 - Also create `.codex/app-active-runs/<run-name>/run-state.json` and
   `.codex/app-active-runs/<run-name>/progress.jsonl` for machine-checkable resume,
   Stop-hook continuation, and later audit.
+- Write `.codex/app-active-runs/current` with the active `<run-name>` so the Stop
+  hook can resume quickly without scanning historical runs.
 - Set `run-state.json.status = "running"` and `stop_guard = true` while an App-only
   active session is expected to continue. Set status to `completed` or `blocked` and
   record `stop_reason` before ending the run.
@@ -145,6 +147,7 @@ For App-only active sessions, create:
 .codex/app-active-runs/<run-name>/run-state.json
 .codex/app-active-runs/<run-name>/progress.md
 .codex/app-active-runs/<run-name>/progress.jsonl
+.codex/app-active-runs/current
 ```
 
 Use the schemas in `schemas/run-state.schema.json` and
@@ -308,6 +311,7 @@ For App-only active sessions, use the stricter project-local paths:
 - `.codex/app-active-runs/<run-name>/run-state.json`
 - `.codex/app-active-runs/<run-name>/progress.md`
 - `.codex/app-active-runs/<run-name>/progress.jsonl`
+- `.codex/app-active-runs/current`
 
 Each `progress.jsonl` line must include `timestamp`, `cycle`, `phase`,
 `elapsed_minutes`, `task`, `files_changed`, `commands`, `validation`,
@@ -343,8 +347,7 @@ Proceed without asking for normal engineering work:
 
 Ask before:
 
-- publishing, uploading, deploying, releasing, committing, pushing, opening PRs, or
-  sending external messages
+- publishing, uploading, deploying, releasing, or sending external messages
 - deleting large numbers of files or user data
 - changing secrets, credentials, payments, accounts, auth providers, production
   infrastructure, or destructive migrations
@@ -365,11 +368,15 @@ Global rules and hooks are installed for high-automation safety:
 - `$CODEX_HOME/rules/autonomous-safety.rules` blocks especially dangerous
   publication, production/infrastructure, destructive database, credential, and broad
   destructive filesystem commands.
-- `$CODEX_HOME/hooks/pre_tool_use_policy.py` denies the same high-risk
-  commands and autonomous writes to secrets/key files.
+- `$CODEX_HOME/hooks/pre_tool_use_policy.py` denies autonomous writes to
+  secrets/key files. The default high-automation hook is
+  attached only to write/patch tools; command blocking is handled by
+  `$CODEX_HOME/rules/autonomous-safety.rules` to avoid per-command Python startup
+  overhead.
 - `$CODEX_HOME/hooks/stop_continue_guard.py` prevents an App-only active
   run from ending while `run-state.json.status = "running"` and
-  `stop_guard = true`.
+  `stop_guard = true`. It prefers `.codex/app-active-runs/current` and reads only
+  the latest `progress.jsonl` event to keep stop checks cheap.
 
 These guardrails are intentionally narrow. They do not block normal project reading,
 editing, dependency installation through existing project conventions, tests, builds,

@@ -37,7 +37,8 @@ Default behavior:
   and unresolved blockers. Main-agent self-review alone is not enough.
 - For App-only active sessions, maintain project-local `run-state.json`,
   `progress.md`, and `progress.jsonl` under `.codex/app-active-runs/<run-name>/`.
-  Keep `run-state.json.status = "running"` and `stop_guard = true` while work must
+  Also write `.codex/app-active-runs/current` with the active run name. Keep
+  `run-state.json.status = "running"` and `stop_guard = true` while work must
   continue; close it with `completed` or `blocked` plus `stop_reason` before ending.
 - Before editing a real project in a timed run, record a preflight covering absolute
   target path, Git status, stack, validation commands, risk areas, project size, and

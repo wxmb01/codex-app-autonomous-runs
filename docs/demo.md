@@ -35,6 +35,7 @@ project completeness reviewer before final readiness.
 .codex/app-active-runs/<run-name>/run-state.json
 .codex/app-active-runs/<run-name>/progress.md
 .codex/app-active-runs/<run-name>/progress.jsonl
+.codex/app-active-runs/current
 ```
 
 ## 5. Example Progress Event
