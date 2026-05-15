@@ -21,6 +21,15 @@ function read(path) {
   return readFileSync(path, "utf8");
 }
 
+function readPngSize(path) {
+  const data = readFileSync(path);
+  assert.equal(data.toString("ascii", 1, 4), "PNG", `${path} is not a PNG`);
+  return {
+    width: data.readUInt32BE(16),
+    height: data.readUInt32BE(20)
+  };
+}
+
 function walk(dir) {
   const files = [];
   for (const name of readdirSync(dir)) {
@@ -192,8 +201,21 @@ assert.ok(compactSkillMd.includes("performance"));
 
 const readme = read(join(repoRoot, "README.md"));
 const faq = read(join(repoRoot, "docs/faq.md"));
+assert.ok(readme.includes("Autonomous Execution Stack"));
+assert.ok(readme.includes("Autonomous Learning Loop"));
+assert.ok(readme.includes("What This Adds"));
+assert.ok(readme.includes("CLI/local runner"));
 assert.ok(readme.includes("every promoted learning iteration also syncs"));
 assert.ok(faq.includes("every promoted learning iteration must reinstall"));
+
+assert.deepEqual(readPngSize(join(repoRoot, "docs/assets/promo-en.png")), { width: 1280, height: 640 });
+assert.deepEqual(readPngSize(join(repoRoot, "docs/assets/promo-zh.png")), { width: 1280, height: 640 });
+assert.deepEqual(readPngSize(join(repoRoot, "docs/assets/promo-background-image2.png")), { width: 1672, height: 941 });
+for (const asset of ["promo-en.webp", "promo-zh.webp"]) {
+  const data = readFileSync(join(repoRoot, "docs/assets", asset));
+  assert.equal(data.toString("ascii", 0, 4), "RIFF", `${asset} should be a WebP RIFF container`);
+  assert.equal(data.toString("ascii", 8, 12), "WEBP", `${asset} should be a WebP asset`);
+}
 
 const agentFiles = [
   "autonomous_reviewer.toml",

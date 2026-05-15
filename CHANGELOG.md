@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.7
+
+- Reworked the GitHub README into a richer project introduction covering the
+  execution stack, learning loop, safety boundary, usage, validation, and docs.
+- Refreshed bilingual promotional images with a darker, more technical visual
+  system and exact locally rendered text.
+- Added validation coverage for README positioning and promo image dimensions.
+
 ## 0.1.6
 
 - Added post-promotion sync rules so every validated learning iteration updates
