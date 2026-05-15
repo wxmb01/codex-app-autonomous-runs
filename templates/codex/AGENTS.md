@@ -43,6 +43,12 @@ Default behavior:
   Also write `.codex/app-active-runs/current` with the active run name. Keep
   `run-state.json.status = "running"` and `stop_guard = true` while work must
   continue; close it with `completed` or `blocked` plus `stop_reason` before ending.
+- For App-only active sessions and long timed runs, also maintain autonomous learning
+  artifacts: `lessons-learned.md`, `improvement-candidates.jsonl`, and
+  `promotion-report.md`. Auto-apply only validated low-risk learning candidates;
+  shadow high-risk global safety, permission, deploy, publish, delete, secrets, or
+  reviewer-policy changes in `$CODEX_HOME/learning/improvement-backlog.jsonl`
+  without asking the user. Do not lower automation rate to collect learning data.
 - Before editing a real project in a timed run, record a preflight covering absolute
   target path, Git status, stack, validation commands, risk areas, project size, and
   reviewer plan.

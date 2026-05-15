@@ -30,6 +30,15 @@ Set the active run's `run-state.json` to `status: "blocked"` or `status:
 "completed"` and record `stop_reason`. The Stop hook only continues runs with
 `status: "running"` and `stop_guard: true`.
 
+## Will it self-learn without my intervention?
+
+Yes for low-risk improvements. Runs record lessons, improvement candidates, and
+promotion decisions automatically. Validated low-risk project, documentation,
+prompt, validation, and performance improvements can be applied without asking.
+High-risk global safety, permission, deploy, publish, delete, secrets, and
+reviewer-policy changes are shadowed in the backlog instead of being silently
+applied.
+
 ## Why does uninstall keep some files?
 
 Install writes a manifest with SHA-256 hashes for managed files. Uninstall removes

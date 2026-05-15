@@ -4,6 +4,8 @@ medium-fixture-project/
 node_modules/
 dist/
 coverage/
+__pycache__/
+*.pyc
 .DS_Store
 Thumbs.db
 *.log

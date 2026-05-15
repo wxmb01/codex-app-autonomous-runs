@@ -72,15 +72,18 @@ def read_state(state_path):
 def last_nonempty_line(path):
     chunk_size = 4096
     buffer = b""
+    max_tail_bytes = 1024 * 1024
     with path.open("rb") as handle:
         handle.seek(0, os.SEEK_END)
         position = handle.tell()
-        while position > 0:
-            read_size = min(chunk_size, position)
+        while position > 0 and len(buffer) <= max_tail_bytes:
+            read_size = min(chunk_size, position, max_tail_bytes - len(buffer) + 1)
             position -= read_size
             handle.seek(position)
             buffer = handle.read(read_size) + buffer
             lines = buffer.splitlines()
+            if position > 0:
+                lines = lines[1:]
             for line in reversed(lines):
                 if line.strip():
                     return line.decode("utf-8-sig")
@@ -121,6 +124,112 @@ def progress_ready(run_dir):
     return True, ""
 
 
+def learning_ready(run_dir):
+    required_files = [
+        "lessons-learned.md",
+        "improvement-candidates.jsonl",
+        "promotion-report.md",
+    ]
+    missing_files = [name for name in required_files if not (run_dir / name).exists()]
+    if missing_files:
+        return False, "missing learning artifacts: " + ", ".join(missing_files)
+
+    candidates_path = run_dir / "improvement-candidates.jsonl"
+    try:
+        line = last_nonempty_line(candidates_path)
+    except Exception:
+        return False, "improvement-candidates.jsonl cannot be read"
+
+    if not line:
+        return True, ""
+
+    try:
+        candidate = json.loads(line)
+    except Exception:
+        return False, "latest improvement-candidates.jsonl line is not valid JSON"
+
+    required = [
+        "timestamp",
+        "run_id",
+        "source",
+        "category",
+        "risk",
+        "scope",
+        "problem",
+        "evidence",
+        "proposal",
+        "target_files",
+        "validation",
+        "promotion_decision",
+        "status",
+    ]
+    missing = [key for key in required if key not in candidate]
+    if missing:
+        return False, "latest improvement candidate missing: " + ", ".join(missing)
+
+    valid_sources = {
+        "self_review",
+        "reviewer",
+        "validation_failure",
+        "blocker",
+        "repeated_friction",
+        "user_correction",
+    }
+    valid_categories = {
+        "project-local",
+        "global-prompt",
+        "global-validation",
+        "global-safety",
+        "release",
+        "documentation",
+        "performance",
+    }
+    valid_risks = {"low", "medium", "high"}
+    valid_scopes = {"project", "codex-global", "repo-template", "release"}
+    valid_decisions = {"auto-apply", "shadow-backlog", "reject"}
+    valid_statuses = {"proposed", "validating", "applied", "shadowed", "rejected"}
+
+    enum_checks = [
+        ("source", valid_sources),
+        ("category", valid_categories),
+        ("risk", valid_risks),
+        ("scope", valid_scopes),
+        ("promotion_decision", valid_decisions),
+        ("status", valid_statuses),
+    ]
+    for key, valid_values in enum_checks:
+        if candidate.get(key) not in valid_values:
+            return False, f"latest improvement candidate has invalid {key}: {candidate.get(key)!r}"
+
+    string_fields = [
+        "timestamp",
+        "run_id",
+        "problem",
+        "evidence",
+        "proposal",
+        "validation",
+    ]
+    for key in string_fields:
+        value = candidate.get(key)
+        if not isinstance(value, str) or not value.strip():
+            return False, f"latest improvement candidate has invalid {key}"
+
+    target_files = candidate.get("target_files")
+    if not isinstance(target_files, list) or not all(isinstance(item, str) and item.strip() for item in target_files):
+        return False, "latest improvement candidate target_files must be a list of strings"
+
+    if candidate["risk"] == "high" or candidate["category"] in {"global-safety", "release"}:
+        if candidate["promotion_decision"] != "shadow-backlog" or candidate["status"] != "shadowed":
+            return False, "high-risk, global-safety, and release learning candidates must be shadowed"
+
+    if candidate["promotion_decision"] == "reject" and candidate["status"] not in {"rejected", "proposed"}:
+        return False, "rejected learning candidates must use rejected or proposed status"
+
+    if candidate["promotion_decision"] == "auto-apply" and candidate["status"] == "shadowed":
+        return False, "auto-applied learning candidates cannot be shadowed"
+    return True, ""
+
+
 def main():
     event = read_event()
     if event.get("stop_hook_active") is True:
@@ -137,6 +246,15 @@ def main():
         emit_block(
             f"Autonomous run is still active but progress logging is incomplete ({detail}). "
             f"Update {run_dir} progress files, run the next useful validation, and continue."
+        )
+        return
+
+    ok, detail = learning_ready(run_dir)
+    if not ok:
+        emit_block(
+            f"Autonomous run is still active but learning artifacts are incomplete ({detail}). "
+            f"Update lessons-learned.md, improvement-candidates.jsonl, and promotion-report.md, "
+            f"then continue the next useful cycle."
         )
         return
 

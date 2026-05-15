@@ -80,6 +80,9 @@ writeFileSync(join(runDir, "progress.jsonl"), JSON.stringify({
   blocker: "none",
   next_step: "continue"
 }) + "\n", "utf8");
+writeFileSync(join(runDir, "lessons-learned.md"), "# Benchmark\n\n- Learning artifacts exist.\n", "utf8");
+writeFileSync(join(runDir, "improvement-candidates.jsonl"), "", "utf8");
+writeFileSync(join(runDir, "promotion-report.md"), "# Promotion Report\n\n- benchmark fixture\n", "utf8");
 
 const results = [
   bench("pre_tool_use_write_guard", preToolHook, {

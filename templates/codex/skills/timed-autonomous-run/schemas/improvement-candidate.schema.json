@@ -1,0 +1,33 @@
+{
+  "required": [
+    "timestamp",
+    "run_id",
+    "source",
+    "category",
+    "risk",
+    "scope",
+    "problem",
+    "evidence",
+    "proposal",
+    "target_files",
+    "validation",
+    "promotion_decision",
+    "status"
+  ],
+  "properties": {
+    "timestamp": "ISO-8601 timestamp",
+    "run_id": "active run id or automation id",
+    "source": "self_review | reviewer | validation_failure | blocker | repeated_friction | user_correction",
+    "category": "project-local | global-prompt | global-validation | global-safety | release | documentation | performance",
+    "risk": "low | medium | high",
+    "scope": "project | codex-global | repo-template | release",
+    "problem": "specific observed weakness, not a vague preference",
+    "evidence": "file, command, reviewer finding, validation result, or repeated event that supports the candidate",
+    "proposal": "smallest concrete improvement",
+    "target_files": "files or config areas the candidate would touch",
+    "validation": "commands, checks, reviewer gates, and rollback evidence required before promotion",
+    "promotion_decision": "auto-apply | shadow-backlog | reject",
+    "status": "proposed | validating | applied | shadowed | rejected",
+    "notes": "optional short rationale or rejection reason"
+  }
+}

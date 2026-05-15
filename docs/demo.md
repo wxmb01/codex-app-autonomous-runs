@@ -25,8 +25,9 @@ Open Codex App settings, go to Hooks, and trust:
 
 ```text
 Use Codex App only. Run this project for 30 minutes, keep working automatically,
-record run-state.json, progress.md, and progress.jsonl, and use a read-only
-project completeness reviewer before final readiness.
+record run-state.json, progress.md, progress.jsonl, lessons-learned.md,
+improvement-candidates.jsonl, and promotion-report.md, and use a read-only project
+completeness reviewer before final readiness.
 ```
 
 For runs of 1 hour or more, the duration request itself authorizes a read-only
@@ -38,8 +39,15 @@ reviewer subagent after orientation.
 .codex/app-active-runs/<run-name>/run-state.json
 .codex/app-active-runs/<run-name>/progress.md
 .codex/app-active-runs/<run-name>/progress.jsonl
+.codex/app-active-runs/<run-name>/lessons-learned.md
+.codex/app-active-runs/<run-name>/improvement-candidates.jsonl
+.codex/app-active-runs/<run-name>/promotion-report.md
 .codex/app-active-runs/current
 ```
+
+High-risk global learning candidates are not auto-applied. They are written to
+`$CODEX_HOME/learning/improvement-backlog.jsonl` with evidence and required
+validation.
 
 ## 5. Example Progress Event
 

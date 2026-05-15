@@ -68,6 +68,9 @@ Execution rules:
 - For medium/large projects, also track `project_size`, `classification_evidence`,
   `reviewer_events`, `reviewer_findings_addressed`, and
   `independent_reviewer_skipped_reason`.
+- Track learning events in `improvement-candidates.jsonl` whenever the run exposes
+  repeated friction, a missed validation, a reviewer finding that should generalize,
+  or a prompt/rule gap.
 - Use short cycles: inspect state, choose one high-value task, edit, validate,
   self-review, log, then immediately continue.
 - Send brief user-facing progress updates during the active session, but do not use
@@ -81,6 +84,9 @@ Execution rules:
   `project_completeness_reviewer` or a specialized reviewer.
 - Use the read-only `autonomous_reviewer` on major changes, validation failures,
   architecture/security/UI/artifact-heavy work, or at regular milestones.
+- Run the autonomous learning loop during hardening and final review. Apply only
+  validated low-risk learning candidates automatically; shadow high-risk candidates
+  without asking the user.
 - If the App/runtime interrupts the turn, the next assistant turn should read the
   `run-state.json`, `progress.md`, and `progress.jsonl` files and continue the same
   run rather than restarting from scratch.
@@ -155,12 +161,18 @@ For App-only active sessions, create:
 .codex/app-active-runs/<run-name>/run-state.json
 .codex/app-active-runs/<run-name>/progress.md
 .codex/app-active-runs/<run-name>/progress.jsonl
+.codex/app-active-runs/<run-name>/lessons-learned.md
+.codex/app-active-runs/<run-name>/improvement-candidates.jsonl
+.codex/app-active-runs/<run-name>/promotion-report.md
 .codex/app-active-runs/current
 ```
 
 Use the schemas in `schemas/run-state.schema.json` and
-`schemas/progress-event.schema.json`. Keep `progress.md` human-readable and
-`progress.jsonl` machine-checkable.
+`schemas/progress-event.schema.json`. For learning outputs, use
+`schemas/improvement-candidate.schema.json` and
+`schemas/run-retrospective.schema.json`. Keep `progress.md` and
+`lessons-learned.md` human-readable, while `progress.jsonl` and
+`improvement-candidates.jsonl` remain machine-checkable.
 
 ## Prompt Template
 
@@ -196,6 +208,8 @@ Done when:
   commands run, validation result, review result, and next step.
 - For runs of 1 hour or more, progress log records reviewer events, findings
   addressed, and any independent reviewer skip reason.
+- Learning log records lessons learned, improvement candidates, promotion decisions,
+  auto-applied candidates, shadowed candidates, and rejected candidates.
 
 Per-cycle loop:
 1. Re-read latest user request and project context.
@@ -208,7 +222,10 @@ Per-cycle loop:
 8. Fix validation failures related to the current change.
 9. Run the review lane.
 10. Inspect real artifacts when relevant.
-11. Update progress log and report concise status.
+11. Record learning candidates from friction, failures, reviewer findings, and user
+    corrections.
+12. Promote eligible low-risk learning candidates only after validation.
+13. Update progress log and report concise status.
 ```
 
 ## Engineering Loop
@@ -311,6 +328,89 @@ gaps, validation gaps, and the smallest next action.
   If subagents are unavailable, perform an explicit self-review and record that no
   independent reviewer was used.
 
+## Autonomous Learning Loop
+
+Use this loop for App-only active sessions, timed automations, and recurring project
+maintenance runs. The goal is self-improvement without user micromanagement and
+without silently weakening safety.
+
+Learning outputs:
+
+- `.codex/app-active-runs/<run-name>/lessons-learned.md`
+- `.codex/app-active-runs/<run-name>/improvement-candidates.jsonl`
+- `.codex/app-active-runs/<run-name>/promotion-report.md`
+- `$CODEX_HOME/learning/improvement-backlog.jsonl` for global candidates that are
+  shadowed or cannot be safely promoted now.
+
+Generate an improvement candidate when evidence shows:
+
+- repeated validation failures or a check discovered too late
+- repeated reviewer findings across cycles or projects
+- unclear prompt instructions that caused hesitation or wrong sequencing
+- unnecessary human checkpoints that did not involve a high-risk action
+- project-type detection gaps, missing artifact inspection, or weak preflight
+- hook/rule behavior that is too slow, too broad, too narrow, or poorly documented
+- user corrections that reveal a reusable operating-rule gap
+
+Classify candidates:
+
+- `project-local`: project docs, tests, scripts, and requirements. Auto-apply when
+  it is low risk, matches the project scope, and validation passes.
+- `global-prompt`: `AGENTS.md`, skill wording, prompt templates, phase budgets,
+  reviewer prompts, and progress-log guidance. Auto-apply when supported by
+  evidence, tested, and not reducing automation.
+- `global-validation`: schemas, tests, examples, fixtures, CI, and benchmarks.
+  Auto-apply when tests pass.
+- `global-safety`: hooks, rules, permission boundaries, destructive-operation
+  policy, secrets handling, production/deploy behavior, or sandbox/approval policy.
+  Do not auto-apply. Shadow the candidate in the backlog with evidence and required
+  validation.
+- `documentation`: README, FAQ, demo, installation, open-source readiness, and
+  handoff docs. Auto-apply when it clarifies current behavior without weakening
+  safety or automation.
+- `performance`: hook latency, validation speed, cycle overhead, batching, and
+  unnecessary repeated scans. Auto-apply when measured or locally evidenced and
+  validation passes.
+- `release`: commits, tags, GitHub releases, publishing, deployment, or external
+  announcements. Do not auto-apply unless the current run was explicitly authorized
+  to publish or update GitHub.
+
+Promotion policy:
+
+- Low-risk project-local, global-prompt, documentation, performance, and
+  global-validation candidates may be auto-applied without user intervention when
+  they are evidence-backed, scoped, reversible, and pass the relevant validation.
+- Medium-risk candidates may be auto-applied only when they touch tests/docs/prompt
+  guidance, have a focused diff, pass full validation, and do not broaden
+  permissions or reduce reviewer requirements.
+- High-risk candidates are never auto-applied. Shadow them in
+  `$CODEX_HOME/learning/improvement-backlog.jsonl` and continue the project without
+  interrupting the user.
+- Never auto-relax safety rules, remove human checkpoints, broaden delete/deploy/
+  publish permissions, change secrets/accounts/payments behavior, or lower reviewer
+  requirements based on one run.
+
+Promotion validation:
+
+- For project-local candidates, run the smallest relevant project validation and log
+  the result.
+- For global-prompt or global-validation candidates in this repository, run
+  `npm run test:all`, `npm run bench:hooks -- --iterations=30 --max-avg-ms=200`,
+  install/uninstall round-trip checks, and package dry-run before promotion.
+- For changed global behavior, perform self-review and, when subagents are
+  available, one read-only reviewer pass before claiming readiness.
+- If validation fails, revert only the candidate's own changes, record `status =
+  "rejected"`, and continue the original project work.
+
+Retrospective cadence:
+
+- During long runs, update learning candidates during hardening and at least every
+  60 minutes.
+- At final review, write a concise retrospective using
+  `schemas/run-retrospective.schema.json`.
+- Do not ask the user whether to save lessons. Save them automatically. Ask only if
+  promotion itself would require a human checkpoint under the Safety Rules.
+
 ## Progress Log
 
 For multi-cycle runs, keep a concise project-local log:
@@ -322,6 +422,8 @@ For multi-cycle runs, keep a concise project-local log:
 - For App active sessions and medium/large projects, also record `project_size`,
   `classification_evidence`, `reviewer_events`, `reviewer_findings_addressed`, and
   `independent_reviewer_skipped_reason`.
+- Record learning artifacts, candidate counts, auto-applied candidates, shadowed
+  candidates, rejected candidates, and promotion validation results.
 - Keep memory concise and current. Log decisions and evidence, not long transcripts.
 
 For App-only active sessions, use the stricter project-local paths:
@@ -329,6 +431,9 @@ For App-only active sessions, use the stricter project-local paths:
 - `.codex/app-active-runs/<run-name>/run-state.json`
 - `.codex/app-active-runs/<run-name>/progress.md`
 - `.codex/app-active-runs/<run-name>/progress.jsonl`
+- `.codex/app-active-runs/<run-name>/lessons-learned.md`
+- `.codex/app-active-runs/<run-name>/improvement-candidates.jsonl`
+- `.codex/app-active-runs/<run-name>/promotion-report.md`
 - `.codex/app-active-runs/current`
 
 Each `progress.jsonl` line must include `timestamp`, `cycle`, `phase`,
@@ -410,6 +515,7 @@ At the end of a bounded run, report:
 - files/areas changed
 - commands and validations run with pass/fail status
 - self-review and independent reviewer findings when used
+- learning candidates generated, auto-applied, shadowed, and rejected
 - remaining risks, skipped checks, blockers, and next recommended action
 
 Do not claim the project is "fully complete" unless all relevant validations passed

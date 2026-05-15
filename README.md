@@ -45,6 +45,11 @@ Codex App Autonomous Runs 是一套面向 Codex App 的全局配置模板，用�
   - `progress.md`
   - `progress.jsonl`
   - `current`
+- Autonomous learning artifacts:
+  - `lessons-learned.md`
+  - `improvement-candidates.jsonl`
+  - `promotion-report.md`
+  - `$CODEX_HOME/learning/improvement-backlog.jsonl` for shadowed high-risk candidates
 - Read-only reviewer agents:
   - `project_completeness_reviewer`
   - `autonomous_reviewer`
@@ -153,6 +158,12 @@ used only when the project risk warrants them.
 
 For timed autonomous runs of 1 hour or more, the duration request itself is treated
 as authorization to start at least one read-only reviewer subagent after orientation.
+
+During long runs, Codex records reusable lessons and improvement candidates without
+asking whether to save them. Validated low-risk project, documentation, prompt,
+validation, and performance improvements may be auto-applied. High-risk global
+safety, permission, deploy, publish, delete, secrets, and reviewer-policy changes
+are written to the shadow backlog instead of being silently applied.
 
 See [docs/demo.md](docs/demo.md), [docs/faq.md](docs/faq.md), and
 [examples/medium-project](examples/medium-project) for a full example.

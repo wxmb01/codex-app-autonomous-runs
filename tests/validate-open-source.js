@@ -94,7 +94,9 @@ const requiredFiles = [
   "templates/codex/skills/timed-autonomous-run/SKILL.md",
   "templates/codex/skills/timed-autonomous-run/schemas/preflight.schema.json",
   "templates/codex/skills/timed-autonomous-run/schemas/progress-event.schema.json",
-  "templates/codex/skills/timed-autonomous-run/schemas/run-state.schema.json"
+  "templates/codex/skills/timed-autonomous-run/schemas/run-state.schema.json",
+  "templates/codex/skills/timed-autonomous-run/schemas/improvement-candidate.schema.json",
+  "templates/codex/skills/timed-autonomous-run/schemas/run-retrospective.schema.json"
 ];
 
 for (const file of requiredFiles) {
@@ -169,6 +171,18 @@ assert.ok(compactSkillMd.includes("1 hour or more is explicit"));
 assert.ok(compactSkillMd.includes("start at least one read-only reviewer"));
 assert.ok(skillMd.includes("Reviewer authorization:"));
 assert.ok(compactSkillMd.includes("user explicitly authorizes read-only reviewer subagents"));
+assert.ok(compactAgentsMd.includes("autonomous learning artifacts"));
+assert.ok(compactAgentsMd.includes("improvement-candidates.jsonl"));
+assert.ok(compactAgentsMd.includes("improvement-backlog.jsonl"));
+assert.ok(compactAgentsMd.includes("Do not lower automation rate"));
+assert.ok(compactSkillMd.includes("Autonomous Learning Loop"));
+assert.ok(compactSkillMd.includes("lessons-learned.md"));
+assert.ok(compactSkillMd.includes("improvement-candidates.jsonl"));
+assert.ok(compactSkillMd.includes("promotion-report.md"));
+assert.ok(compactSkillMd.includes("improvement-backlog.jsonl"));
+assert.ok(compactSkillMd.includes("High-risk candidates are never auto-applied"));
+assert.ok(compactSkillMd.includes("documentation"));
+assert.ok(compactSkillMd.includes("performance"));
 
 const agentFiles = [
   "autonomous_reviewer.toml",
@@ -188,12 +202,23 @@ for (const file of agentFiles) {
 for (const schema of [
   "preflight.schema.json",
   "progress-event.schema.json",
-  "run-state.schema.json"
+  "run-state.schema.json",
+  "improvement-candidate.schema.json",
+  "run-retrospective.schema.json"
 ]) {
   const data = JSON.parse(read(join(templateRoot, "skills/timed-autonomous-run/schemas", schema)));
   assert.ok(Array.isArray(data.required));
   assert.ok(data.required.length > 5);
 }
+const improvementSchema = JSON.parse(read(join(
+  templateRoot,
+  "skills/timed-autonomous-run/schemas/improvement-candidate.schema.json"
+)));
+for (const field of ["category", "risk", "promotion_decision", "status"]) {
+  assert.ok(improvementSchema.required.includes(field), `improvement schema missing ${field}`);
+}
+assert.ok(improvementSchema.properties.category.includes("documentation"));
+assert.ok(improvementSchema.properties.category.includes("performance"));
 
 const rules = read(join(templateRoot, "rules/autonomous-safety.rules"));
 assert.ok(rules.includes('pattern=["npm", "publish"]'));
@@ -228,6 +253,75 @@ assert.equal(JSON.parse(runPython(preToolHook, {
 })).decision, "deny");
 
 const stopHook = join(templateRoot, "hooks/stop_continue_guard.py");
+
+function makeProgressEvent(overrides = {}) {
+  return {
+    timestamp: "2026-01-01T00:00:00+00:00",
+    cycle: 1,
+    phase: "hardening",
+    elapsed_minutes: 1,
+    task: "validate active run state",
+    files_changed: [],
+    commands: [],
+    validation: "passed",
+    self_review: "no issue found",
+    reviewer: "not needed this cycle",
+    blocker: "none",
+    next_step: "continue",
+    ...overrides
+  };
+}
+
+function makeLearningCandidate(overrides = {}) {
+  return {
+    timestamp: "2026-01-01T00:00:00+00:00",
+    run_id: "learning",
+    source: "self_review",
+    category: "documentation",
+    risk: "low",
+    scope: "repo-template",
+    problem: "learning artifacts need validation coverage",
+    evidence: "stop hook validation test",
+    proposal: "keep learning artifacts machine-checkable",
+    target_files: ["templates/codex/skills/timed-autonomous-run/SKILL.md"],
+    validation: "npm test",
+    promotion_decision: "auto-apply",
+    status: "applied",
+    ...overrides
+  };
+}
+
+function createRunningActiveRun(prefix, runName, options = {}) {
+  const root = mkdtempSync(join(tmpdir(), prefix));
+  const activeRoot = join(root, ".codex/app-active-runs");
+  const runDir = join(activeRoot, runName);
+  mkdirSync(runDir, { recursive: true });
+  writeFileSync(join(activeRoot, "current"), runName);
+  writeFileSync(join(runDir, "run-state.json"), JSON.stringify({
+    run_id: runName,
+    target: root,
+    goal: "validate running active run",
+    mode: "app_active_session",
+    status: "running",
+    stop_guard: true,
+    start_time: "2026-01-01T00:00:00+00:00",
+    deadline: "2099-01-01T00:00:00+00:00",
+    last_cycle_at: "2026-01-01T00:00:00+00:00",
+    completed_cycles: 1,
+    project_size: "medium",
+    current_phase: "hardening",
+    stop_reason: ""
+  }));
+  writeFileSync(join(runDir, "progress.md"), "# Progress\n");
+  writeFileSync(join(runDir, "progress.jsonl"), `${JSON.stringify(makeProgressEvent(options.progressEvent))}\n`);
+  writeFileSync(join(runDir, "lessons-learned.md"), "# Lessons Learned\n\n- Keep working.\n");
+  writeFileSync(join(runDir, "improvement-candidates.jsonl"), `${JSON.stringify(options.candidate ?? makeLearningCandidate({
+    run_id: runName
+  }))}\n`);
+  writeFileSync(join(runDir, "promotion-report.md"), "# Promotion Report\n\n- auto_applied: 1\n");
+  return { root, runDir };
+}
+
 const completedRoot = mkdtempSync(join(tmpdir(), "codex-completed-"));
 const completedRun = join(completedRoot, ".codex/app-active-runs/done");
 mkdirSync(completedRun, { recursive: true });
@@ -302,6 +396,86 @@ writeFileSync(join(partialRun, "progress.jsonl"), `${JSON.stringify({
 const partialBlock = JSON.parse(runPython(stopHook, { cwd: runningRoot, stop_hook_active: false }));
 assert.equal(partialBlock.decision, "block");
 assert.ok(partialBlock.reason.includes("phase"));
+
+const learningRoot = mkdtempSync(join(tmpdir(), "codex-learning-"));
+const learningRun = join(learningRoot, ".codex/app-active-runs/learning");
+mkdirSync(learningRun, { recursive: true });
+writeFileSync(join(learningRoot, ".codex/app-active-runs/current"), "learning");
+writeFileSync(join(learningRun, "run-state.json"), JSON.stringify({
+  run_id: "learning",
+  target: learningRoot,
+  goal: "running run should block if learning artifacts are missing",
+  mode: "app_active_session",
+  status: "running",
+  stop_guard: true,
+  start_time: "2026-01-01T00:00:00+00:00",
+  deadline: "2099-01-01T00:00:00+00:00",
+  last_cycle_at: "2026-01-01T00:00:00+00:00",
+  completed_cycles: 1,
+  project_size: "medium",
+  current_phase: "hardening",
+  stop_reason: ""
+}));
+writeFileSync(join(learningRun, "progress.md"), "# Progress\n");
+writeFileSync(join(learningRun, "progress.jsonl"), `${JSON.stringify({
+  timestamp: "2026-01-01T00:00:00+00:00",
+  cycle: 1,
+  phase: "hardening",
+  elapsed_minutes: 1,
+  task: "check learning artifacts",
+  files_changed: [],
+  commands: [],
+  validation: "passed",
+  self_review: "learning artifacts still need to be recorded",
+  reviewer: "not needed this cycle",
+  blocker: "none",
+  next_step: "write learning artifacts"
+})}\n`);
+const learningBlock = JSON.parse(runPython(stopHook, { cwd: learningRoot, stop_hook_active: false }));
+assert.equal(learningBlock.decision, "block");
+assert.ok(learningBlock.reason.includes("learning artifacts"));
+
+const validLearning = createRunningActiveRun("codex-valid-learning-", "valid-learning");
+const validLearningBlock = JSON.parse(runPython(stopHook, { cwd: validLearning.root, stop_hook_active: false }));
+assert.equal(validLearningBlock.decision, "block");
+assert.ok(validLearningBlock.reason.includes("Continue the next cycle"));
+
+const highRiskLearning = createRunningActiveRun("codex-high-risk-learning-", "high-risk-learning", {
+  candidate: makeLearningCandidate({
+    run_id: "high-risk-learning",
+    category: "global-safety",
+    risk: "high",
+    scope: "codex-global",
+    promotion_decision: "auto-apply",
+    status: "applied"
+  })
+});
+const highRiskLearningBlock = JSON.parse(runPython(stopHook, { cwd: highRiskLearning.root, stop_hook_active: false }));
+assert.equal(highRiskLearningBlock.decision, "block");
+assert.ok(highRiskLearningBlock.reason.includes("must be shadowed"));
+
+const malformedCandidate = createRunningActiveRun("codex-malformed-learning-", "malformed-learning", {
+  candidate: makeLearningCandidate({
+    run_id: "malformed-learning",
+    target_files: "templates/codex/AGENTS.md"
+  })
+});
+const malformedCandidateBlock = JSON.parse(runPython(stopHook, { cwd: malformedCandidate.root, stop_hook_active: false }));
+assert.equal(malformedCandidateBlock.decision, "block");
+assert.ok(malformedCandidateBlock.reason.includes("target_files"));
+
+const longJsonl = createRunningActiveRun("codex-long-jsonl-", "long-jsonl", {
+  progressEvent: {
+    self_review: "x".repeat(5000)
+  },
+  candidate: makeLearningCandidate({
+    run_id: "long-jsonl",
+    evidence: "x".repeat(5000)
+  })
+});
+const longJsonlBlock = JSON.parse(runPython(stopHook, { cwd: longJsonl.root, stop_hook_active: false }));
+assert.equal(longJsonlBlock.decision, "block");
+assert.ok(longJsonlBlock.reason.includes("Continue the next cycle"));
 
 const installHome = mkdtempSync(join(tmpdir(), "codex-install-preview-"));
 const installPreview = execFileSync("node", [
@@ -412,9 +586,12 @@ const packOutput = JSON.parse(execSync(packCommand, {
 }))[0];
 const packedFiles = packOutput.files.map((file) => file.path);
 assert.ok(packedFiles.includes("templates/codex/skills/timed-autonomous-run/SKILL.md"));
+assert.ok(packedFiles.includes("templates/codex/skills/timed-autonomous-run/schemas/improvement-candidate.schema.json"));
+assert.ok(packedFiles.includes("templates/codex/skills/timed-autonomous-run/schemas/run-retrospective.schema.json"));
 assert.ok(packedFiles.includes("tests/validate-rules.js"));
 assert.ok(packedFiles.includes(".github/workflows/validate.yml"));
 assert.equal(packedFiles.some((file) => file.includes(".codex/app-active-runs")), false);
+assert.equal(packedFiles.some((file) => file.includes("__pycache__") || file.endsWith(".pyc")), false);
 
 const exampleOutput = execFileSync("node", [join(repoRoot, "examples/medium-project/tests/validate.js")], {
   encoding: "utf8"

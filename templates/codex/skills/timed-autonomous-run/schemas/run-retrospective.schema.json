@@ -1,0 +1,34 @@
+{
+  "required": [
+    "run_id",
+    "target",
+    "goal",
+    "completed_at",
+    "outcome",
+    "automation_friction",
+    "validation_gaps",
+    "reviewer_findings",
+    "repeated_failures",
+    "learning_candidates",
+    "auto_applied",
+    "shadowed",
+    "rejected",
+    "next_run_adjustments"
+  ],
+  "properties": {
+    "run_id": "active run id or automation id",
+    "target": "absolute project path or automation target",
+    "goal": "user-visible objective",
+    "completed_at": "ISO-8601 timestamp",
+    "outcome": "completed | blocked | partial | cancelled",
+    "automation_friction": "places where Codex hesitated, repeated work, asked unnecessarily, or missed context",
+    "validation_gaps": "checks that were missing, flaky, too slow, or discovered late",
+    "reviewer_findings": "independent reviewer findings and whether they repeated earlier patterns",
+    "repeated_failures": "recurring failures, tool errors, prompt ambiguity, or project-type blind spots",
+    "learning_candidates": "count and summary of improvement candidates generated",
+    "auto_applied": "low or medium risk candidates promoted and validated without user intervention",
+    "shadowed": "high-risk or insufficient-evidence candidates recorded but not applied",
+    "rejected": "candidates rejected with reason",
+    "next_run_adjustments": "concrete behavior changes for the next autonomous run"
+  }
+}

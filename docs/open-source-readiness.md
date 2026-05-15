@@ -13,6 +13,9 @@ Before publishing:
 - Confirm uninstall preserves modified or user-owned `hooks.json`.
 - Confirm timed runs of 1 hour or more include reviewer-subagent authorization in
   the skill prompt template.
+- Confirm autonomous learning artifacts, schemas, and promotion gates are included.
+- Confirm high-risk global learning candidates are shadowed rather than
+  auto-applied.
 - Confirm examples are under `examples/` and old local-runner fixtures are not
   tracked.
 - Review hooks in Codex App before trusting them.

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.5
+
+- Added an autonomous learning loop for timed and App-only active runs.
+- Added learning artifacts: `lessons-learned.md`,
+  `improvement-candidates.jsonl`, and `promotion-report.md`.
+- Added schemas for improvement candidates and run retrospectives.
+- Defined automatic promotion gates for low-risk project-local, prompt, docs,
+  performance, and validation improvements.
+- Required high-risk global safety, permissions, deploy, publish, delete, secrets,
+  and reviewer-policy changes to enter shadow backlog instead of auto-applying.
+- Enforced learning artifact presence, high-risk shadow policy, long JSONL events,
+  and package hygiene in validation.
+
 ## 0.1.4
 
 - Changed `--merge` installers to merge managed Codex hooks into existing

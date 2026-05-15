@@ -20,6 +20,11 @@ The blocked set is intentionally narrow:
 This preserves automation rate while still guarding against actions that are hard
 to recover from.
 
+The autonomous learning loop follows the same boundary. It can auto-apply
+validated low-risk documentation, prompt, validation, performance, and project-local
+improvements, but it does not auto-relax safety rules, deploy/publish/delete
+permissions, secrets handling, or reviewer requirements.
+
 For performance, command blocking is handled by the prefix-based rules file, while
 the default `PreToolUse` hook is attached only to write/patch tools for secret and
 private-key write checks. The rules file is fast and intentionally narrow. It

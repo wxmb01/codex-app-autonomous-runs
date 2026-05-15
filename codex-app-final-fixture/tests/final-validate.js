@@ -44,13 +44,18 @@ const safetyRules = join(codexHome, "rules/autonomous-safety.rules");
 const schemas = [
   join(codexHome, "skills/timed-autonomous-run/schemas/preflight.schema.json"),
   join(codexHome, "skills/timed-autonomous-run/schemas/progress-event.schema.json"),
-  join(codexHome, "skills/timed-autonomous-run/schemas/run-state.schema.json")
+  join(codexHome, "skills/timed-autonomous-run/schemas/run-state.schema.json"),
+  join(codexHome, "skills/timed-autonomous-run/schemas/improvement-candidate.schema.json"),
+  join(codexHome, "skills/timed-autonomous-run/schemas/run-retrospective.schema.json")
 ];
 const fixtureRunDir = join(mkdtempSync(join(tmpdir(), "codex-final-fixture-run-")), ".codex/app-active-runs/final-readiness-test");
 mkdirSync(fixtureRunDir, { recursive: true });
 const progressLog = join(fixtureRunDir, "progress.md");
 const runStateFile = join(fixtureRunDir, "run-state.json");
 const progressJsonl = join(fixtureRunDir, "progress.jsonl");
+const lessonsLearned = join(fixtureRunDir, "lessons-learned.md");
+const improvementCandidates = join(fixtureRunDir, "improvement-candidates.jsonl");
+const promotionReport = join(fixtureRunDir, "promotion-report.md");
 
 writeFileSync(progressLog, `# Final Readiness Test Progress
 
@@ -74,8 +79,14 @@ writeFileSync(progressLog, `# Final Readiness Test Progress
 - self_review: global rules and skill enforce App-only long active sessions for no-pause requests, prohibit CLI/local runner for that mode, require progress logs, require reviewer events for medium/large projects, and keep high-risk actions as human checkpoints.
 - reviewer_events: autonomous_reviewer final readiness review returned "ready with caveats"; P0 none; P1 none; P2 progress log closure, structured TOML validation, Windows/Unicode path evidence; P3 policy-only safety under danger-full-access.
 - reviewer_findings_addressed: fixed progress log required fields and final status; added structured TOML parse/asserts to final validation; added portable fixture target evidence; recorded danger-full-access safety as residual risk.
+- learning_artifacts: lessons-learned.md; improvement-candidates.jsonl; promotion-report.md; run-retrospective.schema.json; improvement-candidate.schema.json.
+- learning_candidates: 1 documentation candidate generated from the final-readiness fixture evidence.
+- auto_applied: 1 low-risk documentation/validation candidate recorded in fixture artifacts.
+- shadowed: 0 in this fixture; high-risk global safety changes would go to improvement-backlog.jsonl.
+- rejected: 0.
+- promotion_validation: final validation reads learning artifacts, validates the latest improvement candidate shape, and confirms high-risk candidates are shadow-only.
 - independent_reviewer_skipped_reason: none
-- changed_files_or_areas: final fixture tests and progress log; global config restored [agents] limits; global safety rules, hooks, schemas, and specialized reviewer agents.
+- changed_files_or_areas: final fixture tests and progress log; autonomous learning artifacts; global config restored [agents] limits; global safety rules, hooks, schemas, and specialized reviewer agents.
 - blockers: none
 - residual_risk: literal zero idle time cannot be guaranteed by a desktop App runtime; danger-full-access plus approval_policy=never means safety relies on narrow rules and hook guardrails for high-impact actions.
 - next_step: ready for first real medium/large project run with main agent plus read-only project_completeness_reviewer.
@@ -156,6 +167,37 @@ writeFileSync(progressJsonl, [
   }
 ].map((event) => JSON.stringify(event)).join("\n") + "\n");
 
+writeFileSync(lessonsLearned, `# Lessons Learned
+
+- Final readiness checks should validate learning artifacts, not just progress logs.
+- High-risk global safety changes remain shadow-only even when automation should stay high.
+`);
+
+writeFileSync(improvementCandidates, `${JSON.stringify({
+  timestamp: "2026-05-15T19:05:41+08:00",
+  run_id: "app-active-final-readiness-test",
+  source: "self_review",
+  category: "documentation",
+  risk: "low",
+  scope: "repo-template",
+  problem: "final fixture did not previously prove that autonomous learning artifacts were installed and readable",
+  evidence: "final validation fixture exercises installed templates and active-run logs",
+  proposal: "add fixture-level learning artifact assertions",
+  target_files: ["codex-app-final-fixture/tests/final-validate.js"],
+  validation: "npm --prefix codex-app-final-fixture test",
+  promotion_decision: "auto-apply",
+  status: "applied",
+  notes: "low-risk validation and documentation coverage"
+})}\n`);
+
+writeFileSync(promotionReport, `# Promotion Report
+
+- auto_applied: 1
+- shadowed: 0
+- rejected: 0
+- validation: final validation reads learning artifacts and schema metadata.
+`);
+
 function read(path) {
   assert.ok(existsSync(path), `missing ${path}`);
   return readFileSync(path, "utf8");
@@ -209,6 +251,8 @@ const requiredGlobalPhrases = [
   "project_completeness_reviewer",
   "Main-agent self-review alone is not enough",
   "progress.jsonl",
+  "autonomous learning artifacts",
+  "improvement-backlog.jsonl",
   "Global guardrails"
 ];
 
@@ -228,6 +272,12 @@ const requiredSkillPhrases = [
   "Phase Budget",
   "Global Guardrails",
   "progress-event.schema.json",
+  "improvement-candidate.schema.json",
+  "run-retrospective.schema.json",
+  "Autonomous Learning Loop",
+  "High-risk candidates are never auto-applied",
+  "documentation",
+  "performance",
   "stop_continue_guard.py"
 ];
 
@@ -278,6 +328,10 @@ for (const doc of schemaDocs) {
   assert.ok(Array.isArray(doc.required));
   assert.ok(doc.required.length > 5);
 }
+assert.ok(schemaDocs[3].required.includes("promotion_decision"));
+assert.ok(schemaDocs[3].properties.category.includes("documentation"));
+assert.ok(schemaDocs[3].properties.category.includes("performance"));
+assert.ok(schemaDocs[4].required.includes("learning_candidates"));
 
 const safeHookResult = runHook(preToolHook, {
   tool_name: "Bash",
@@ -386,6 +440,12 @@ const progressRequired = [
   "self_review",
   "reviewer_events",
   "reviewer_findings_addressed",
+  "learning_artifacts",
+  "learning_candidates",
+  "auto_applied",
+  "shadowed",
+  "rejected",
+  "promotion_validation",
   "blockers",
   "next_step"
 ];
@@ -399,6 +459,14 @@ assert.ok(existsSync(root), "fixture root should resolve from current Unicode pa
 assert.equal(runState.status, "completed");
 assert.equal(runState.stop_guard, true);
 assert.ok(runState.stop_reason);
+assert.ok(read(lessonsLearned).includes("Lessons Learned"));
+assert.ok(read(promotionReport).includes("auto_applied"));
+const latestCandidate = JSON.parse(read(improvementCandidates).trim().split(/\r?\n/).at(-1));
+for (const field of schemaDocs[3].required) {
+  assert.ok(field in latestCandidate, `improvement candidate missing ${field}`);
+}
+assert.equal(latestCandidate.promotion_decision, "auto-apply");
+assert.equal(latestCandidate.status, "applied");
 
 const progressEvents = read(progressJsonl)
   .split(/\r?\n/)

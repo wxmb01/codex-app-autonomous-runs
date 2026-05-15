@@ -15,4 +15,6 @@ project-completeness review lane.
 - Medium and large projects require a read-only project completeness reviewer.
 - Progress logs record timing, commands, validation, self-review, reviewer events,
   blockers, and next actions.
+- Learning artifacts record lessons, improvement candidates, promotion decisions,
+  and shadowed high-risk global changes.
 - Risky actions remain human checkpoints.
