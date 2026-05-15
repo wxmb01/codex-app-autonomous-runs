@@ -262,7 +262,7 @@ function main() {
     throw new Error(`Refusing to promote from branch ${branch}. Use --allow-branch only for intentional non-main testing.`);
   }
 
-  mustRun("fetch remote state", "git", ["fetch", "origin", "main", "--tags"], steps, { dryRun });
+  mustRun("fetch remote main", "git", ["fetch", "origin", "main"], steps, { dryRun });
   if (!dryRun) {
     const counts = git(["rev-list", "--left-right", "--count", "origin/main...HEAD"]).split(/\s+/).map(Number);
     if (counts[0] > 0) throw new Error("origin/main has commits not present locally; pull/rebase before promoting.");
