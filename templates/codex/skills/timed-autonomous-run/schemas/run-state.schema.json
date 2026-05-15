@@ -1,0 +1,32 @@
+{
+  "required": [
+    "run_id",
+    "target",
+    "goal",
+    "mode",
+    "status",
+    "stop_guard",
+    "start_time",
+    "deadline",
+    "last_cycle_at",
+    "completed_cycles",
+    "project_size",
+    "current_phase",
+    "stop_reason"
+  ],
+  "properties": {
+    "run_id": "stable run identifier",
+    "target": "absolute project path",
+    "goal": "user-visible objective",
+    "mode": "app_active_session | heartbeat | cron_worktree",
+    "status": "running | blocked | completed",
+    "stop_guard": "true only for App active sessions that should not stop",
+    "start_time": "ISO-8601 timestamp",
+    "deadline": "ISO-8601 timestamp or bounded turn deadline",
+    "last_cycle_at": "ISO-8601 timestamp",
+    "completed_cycles": "integer cycle count",
+    "project_size": "small | medium | large",
+    "current_phase": "orientation | implementation | hardening | final_review",
+    "stop_reason": "empty while running; required when blocked or completed"
+  }
+}

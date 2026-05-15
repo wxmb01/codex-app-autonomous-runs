@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="420" viewBox="0 0 920 420" role="img" aria-labelledby="title desc">
+  <title id="title">Codex App hooks trust screen</title>
+  <desc id="desc">Illustrative diagram showing PreToolUse and Stop hooks with Trust enabled.</desc>
+  <rect width="920" height="420" fill="#101010"/>
+  <text x="48" y="58" fill="#f5f5f5" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="700">Hooks</text>
+  <text x="48" y="92" fill="#b9b9b9" font-family="Segoe UI, Arial, sans-serif" font-size="17">Review and trust installed lifecycle hooks</text>
+  <rect x="48" y="126" width="824" height="106" rx="14" fill="#1d1d1d" stroke="#333"/>
+  <text x="84" y="170" fill="#f0f0f0" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="600">PreToolUse</text>
+  <text x="84" y="199" fill="#a9a9a9" font-family="Segoe UI, Arial, sans-serif" font-size="17">Blocks especially dangerous commands before tools run</text>
+  <rect x="696" y="155" width="88" height="38" rx="19" fill="#272727" stroke="#555"/>
+  <text x="724" y="180" fill="#ffffff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="600">Trust</text>
+  <rect x="804" y="158" width="44" height="26" rx="13" fill="#3b7cff"/>
+  <circle cx="835" cy="171" r="11" fill="#ffffff"/>
+  <rect x="48" y="256" width="824" height="106" rx="14" fill="#1d1d1d" stroke="#333"/>
+  <text x="84" y="300" fill="#f0f0f0" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="600">Stop</text>
+  <text x="84" y="329" fill="#a9a9a9" font-family="Segoe UI, Arial, sans-serif" font-size="17">Keeps active autonomous runs from ending while status is running</text>
+  <rect x="696" y="285" width="88" height="38" rx="19" fill="#272727" stroke="#555"/>
+  <text x="724" y="310" fill="#ffffff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="600">Trust</text>
+  <rect x="804" y="288" width="44" height="26" rx="13" fill="#3b7cff"/>
+  <circle cx="835" cy="301" r="11" fill="#ffffff"/>
+</svg>

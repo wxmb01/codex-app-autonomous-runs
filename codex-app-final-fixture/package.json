@@ -1,0 +1,11 @@
+{
+  "name": "codex-app-final-fixture",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/final-validate.js",
+    "lint": "node tests/lint-rules.js",
+    "build": "node tests/build-check.js"
+  }
+}

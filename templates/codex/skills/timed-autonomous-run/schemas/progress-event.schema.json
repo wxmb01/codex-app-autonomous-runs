@@ -1,0 +1,30 @@
+{
+  "required": [
+    "timestamp",
+    "cycle",
+    "phase",
+    "elapsed_minutes",
+    "task",
+    "files_changed",
+    "commands",
+    "validation",
+    "self_review",
+    "reviewer",
+    "blocker",
+    "next_step"
+  ],
+  "properties": {
+    "timestamp": "ISO-8601 timestamp",
+    "cycle": "integer cycle count",
+    "phase": "orientation | implementation | hardening | final_review",
+    "elapsed_minutes": "minutes since run start",
+    "task": "focused task for this cycle",
+    "files_changed": "files or areas changed in this cycle",
+    "commands": "commands run and pass/fail result",
+    "validation": "smallest relevant validation and result",
+    "self_review": "main-agent review summary",
+    "reviewer": "independent reviewer used, skipped reason, or findings",
+    "blocker": "none or human checkpoint/blocker",
+    "next_step": "specific next action"
+  }
+}

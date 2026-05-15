@@ -1,0 +1,30 @@
+{
+  "required": [
+    "target",
+    "goal",
+    "requested_duration",
+    "mode",
+    "git",
+    "project_markers",
+    "stack",
+    "validation_commands",
+    "risk_areas",
+    "project_size",
+    "review_plan",
+    "human_checkpoints"
+  ],
+  "properties": {
+    "target": "absolute project path",
+    "goal": "user-visible objective",
+    "requested_duration": "requested time budget or bounded run",
+    "mode": "app_active_session | heartbeat | cron_worktree",
+    "git": "repo status, branch, dirty files, or no_git",
+    "project_markers": "package.json, pyproject.toml, Cargo.toml, go.mod, README, CI, etc.",
+    "stack": "detected languages, frameworks, package managers, app areas",
+    "validation_commands": "small, medium, and broad checks with expected cost",
+    "risk_areas": "secrets, production, migrations, data deletion, auth/payments, deployment",
+    "project_size": "small | medium | large with evidence",
+    "review_plan": "self-review plus independent reviewer events",
+    "human_checkpoints": "actions that must stop for user approval"
+  }
+}

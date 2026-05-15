@@ -1,0 +1,41 @@
+# High-automation safety rails for Codex App autonomous project runs.
+#
+# These rules intentionally do not block normal engineering work such as reading,
+# editing, installing documented project dependencies, testing, building, previewing,
+# running local dev servers, committing, pushing, or opening PRs. They only block
+# especially dangerous publication, production/infrastructure, destructive database,
+# credential, and destructive filesystem operations.
+
+prefix_rule(pattern=["git", "reset", "--hard"], decision="forbidden")
+prefix_rule(pattern=["git", "clean", "-fd"], decision="forbidden")
+prefix_rule(pattern=["git", "clean", "-xdf"], decision="forbidden")
+
+prefix_rule(pattern=["gh", "release", "create"], decision="forbidden")
+prefix_rule(pattern=["gh", "repo", "delete"], decision="forbidden")
+
+prefix_rule(pattern=["npm", "publish"], decision="forbidden")
+prefix_rule(pattern=["pnpm", "publish"], decision="forbidden")
+prefix_rule(pattern=["yarn", "publish"], decision="forbidden")
+
+prefix_rule(pattern=["docker", "push"], decision="forbidden")
+prefix_rule(pattern=["kubectl", "apply"], decision="forbidden")
+prefix_rule(pattern=["kubectl", "delete"], decision="forbidden")
+prefix_rule(pattern=["kubectl", "replace"], decision="forbidden")
+prefix_rule(pattern=["helm", "upgrade"], decision="forbidden")
+prefix_rule(pattern=["helm", "install"], decision="forbidden")
+prefix_rule(pattern=["helm", "uninstall"], decision="forbidden")
+
+prefix_rule(pattern=["terraform", "apply"], decision="forbidden")
+prefix_rule(pattern=["terraform", "destroy"], decision="forbidden")
+prefix_rule(pattern=["tofu", "apply"], decision="forbidden")
+prefix_rule(pattern=["tofu", "destroy"], decision="forbidden")
+prefix_rule(pattern=["pulumi", "up"], decision="forbidden")
+prefix_rule(pattern=["pulumi", "destroy"], decision="forbidden")
+
+prefix_rule(pattern=["vercel", "deploy", "--prod"], decision="forbidden")
+prefix_rule(pattern=["netlify", "deploy", "--prod"], decision="forbidden")
+prefix_rule(pattern=["firebase", "deploy"], decision="forbidden")
+prefix_rule(pattern=["wrangler", "deploy"], decision="forbidden")
+
+prefix_rule(pattern=["rm", "-rf"], decision="forbidden")
+prefix_rule(pattern=["Remove-Item", "-Recurse", "-Force"], decision="forbidden")
