@@ -95,6 +95,22 @@ Execution rules:
 - Do not wait idly for the first-cycle reviewer. After the reviewer is started and
   logged, continue implementation in parallel unless the reviewer immediately reports
   a P0/P1 blocker or a human checkpoint is required.
+- Use the Codex App-compatible launch mode for specialized reviewers:
+  - When using `project_completeness_reviewer`, `security_reviewer`,
+    `test_coverage_reviewer`, `architecture_reviewer`, `ui_artifact_reviewer`, or
+    another named reviewer type, do not combine that `agent_type` with a full-context
+    fork.
+  - Start the specialized reviewer without a fork and give it a self-contained prompt
+    containing the target path, user goal, duration, project facts, validation
+    commands, risk areas, changed files if any, progress/log artifact paths, and the
+    exact output expected.
+  - Use a full-context fork only when omitting the specialized `agent_type`; this is
+    not the default for required reviewer lanes.
+  - If the reviewer launch is rejected because of an incompatible specialized-type
+    plus full-context-fork combination, retry immediately with the same specialized
+    reviewer and no fork. Do not wait for the user to point it out, and do not make
+    implementation edits before the retry succeeds or an unavailable-tool reason is
+    logged.
 - Use the read-only `autonomous_reviewer` on major changes, validation failures,
   architecture/security/UI/artifact-heavy work, or at regular milestones.
 - Run the autonomous learning loop during hardening and final review. Apply only
@@ -206,7 +222,8 @@ Context:
 Reviewer authorization:
 - If the requested duration is 1 hour or more, the user explicitly authorizes
   read-only reviewer subagents. Start at least one reviewer in the first cycle, after
-  only minimal preflight/orientation and before the first implementation edit.
+  only minimal preflight/orientation and before the first implementation edit. Use a
+  specialized reviewer without a full-context fork and pass a self-contained prompt.
 
 Constraints:
 - Operate in the target project path. If the current thread/workspace is different,
@@ -336,6 +353,15 @@ project area for completeness against the user's goal. Inspect requirements, REA
 core flows, tests, build/validation commands, docs, progress log, git status, and
 risk areas. Do not edit files. Return verdict, P0/P1/P2/P3 findings, completeness
 gaps, validation gaps, and the smallest next action.
+```
+
+Reviewer launch reminder:
+
+```text
+Launch this specialized reviewer without full-context fork. The prompt is
+self-contained: target=<absolute path>, goal=<goal>, duration=<duration>,
+project facts=<facts>, validation=<commands>, risk areas=<risks>, artifacts=<paths>.
+Do not edit files.
 ```
 
 - The main agent owns the final decision. Fix confirmed P0/P1 issues before

@@ -15,6 +15,8 @@ Before publishing:
   the skill prompt template.
 - Confirm the 1h+ reviewer lane is required in the first cycle before the first
   implementation edit, not deferred until a readiness claim.
+- Confirm specialized reviewers are launched without full-context fork and receive
+  self-contained prompts with target, goal, validation, risk, and artifact context.
 - Confirm autonomous learning artifacts, schemas, and promotion gates are included.
 - Confirm `promotion-report.schema.json` requires install, commit, push, release,
   and reviewer evidence.

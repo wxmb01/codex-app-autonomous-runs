@@ -40,6 +40,14 @@ Default behavior:
   progress update must state `reviewer_started`, the reviewer type, and the assigned
   review scope. Only use `independent_reviewer_skipped_reason` when the subagent tool
   is unavailable.
+- Use a Codex App-compatible reviewer launch: when selecting a specialized reviewer
+  type such as `project_completeness_reviewer`, `security_reviewer`,
+  `test_coverage_reviewer`, `architecture_reviewer`, or `ui_artifact_reviewer`, do
+  not request a full-context fork. Pass a self-contained prompt with target path,
+  goal, project facts, progress/log paths, risk areas, and requested findings. If the
+  App rejects a reviewer launch because a specialized reviewer was combined with
+  full-context fork, retry immediately with the same reviewer type and no fork before
+  implementation begins.
 - For medium or large projects, always use a read-only `project_completeness_reviewer`
   subagent to review completeness, validation gaps, architecture risks, docs drift,
   and unresolved blockers. Main-agent self-review alone is not enough.

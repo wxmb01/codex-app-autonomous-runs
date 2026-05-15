@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.10
+
+- Added Codex App-compatible reviewer launch rules so specialized reviewer agents
+  are started with self-contained prompts instead of full-context forks.
+- Required immediate retry with a compatible no-fork reviewer invocation when the
+  App rejects a reviewer launch because of tool argument combinations.
+- Added validation coverage that first-cycle 1h+ reviewer events record the launch
+  mode and avoid the incompatible specialized-reviewer plus full-context fork path.
+
 ## 0.1.9
 
 - Tightened 1h+ timed-run reviewer behavior: Codex must start a read-only reviewer

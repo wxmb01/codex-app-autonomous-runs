@@ -17,7 +17,10 @@ For no-pause or no-idle requests, the intended behavior is:
    read-only reviewer subagent from the start of the run. Codex may do only minimal
    preflight/orientation first, then must start the reviewer before the first
    implementation edit.
-8. Stop only when the duration expires, the goal is complete, or an especially
+8. Start specialized reviewers with self-contained prompts and no full-context fork.
+   If the App rejects an incompatible specialized-reviewer plus fork launch, retry
+   immediately with no fork before implementation begins.
+9. Stop only when the duration expires, the goal is complete, or an especially
    dangerous human checkpoint is reached.
 
 Heartbeat automations are useful as scheduled wakeups, but they are not permanent

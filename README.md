@@ -96,6 +96,7 @@ used when the project risk warrants them.
 For runs of 1 hour or more, the duration request itself authorizes at least one
 read-only reviewer subagent from the start of the run. Codex may do only minimal
 preflight/orientation first, then it must start the reviewer before the first implementation edit.
+Specialized reviewers are launched with self-contained prompts rather than full-context forks, which matches Codex App's reviewer-agent constraints and avoids the delayed retry pattern.
 
 ## Autonomous Learning Loop
 
