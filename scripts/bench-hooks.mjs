@@ -83,6 +83,45 @@ writeFileSync(join(runDir, "progress.jsonl"), JSON.stringify({
 writeFileSync(join(runDir, "lessons-learned.md"), "# Benchmark\n\n- Learning artifacts exist.\n", "utf8");
 writeFileSync(join(runDir, "improvement-candidates.jsonl"), "", "utf8");
 writeFileSync(join(runDir, "promotion-report.md"), "# Promotion Report\n\n- benchmark fixture\n", "utf8");
+writeFileSync(join(runDir, "promotion-report.json"), JSON.stringify({
+  generated_at: "2026-01-01T00:00:00Z",
+  repository: "benchmark",
+  version: "0.0.0",
+  status: "pending",
+  promotion: {
+    categories: ["documentation"],
+    changed_files: [],
+    candidate_files: [],
+    validation_policy: "benchmark fixture"
+  },
+  validation: [],
+  install_result: {
+    status: "skipped",
+    codex_home: "benchmark",
+    manifest_version: "0.0.0"
+  },
+  git: {
+    branch: "benchmark",
+    commit_sha: "benchmark",
+    tag: null
+  },
+  github: {
+    push_result: {
+      status: "skipped"
+    },
+    release: {
+      status: "skipped"
+    }
+  },
+  reviewer: {
+    required: false,
+    used: false,
+    agent_type: "none",
+    result: "",
+    findings: "not required for benchmark fixture"
+  },
+  steps: []
+}) + "\n", "utf8");
 
 const results = [
   bench("pre_tool_use_write_guard", preToolHook, {

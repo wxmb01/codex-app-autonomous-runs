@@ -45,15 +45,24 @@ Default behavior:
   continue; close it with `completed` or `blocked` plus `stop_reason` before ending.
 - For App-only active sessions and long timed runs, also maintain autonomous learning
   artifacts: `lessons-learned.md`, `improvement-candidates.jsonl`, and
-  `promotion-report.md`. Auto-apply only validated low-risk learning candidates;
-  shadow high-risk global safety, permission, deploy, publish, delete, secrets, or
-  reviewer-policy changes in `$CODEX_HOME/learning/improvement-backlog.jsonl`
-  without asking the user. Do not lower automation rate to collect learning data.
+  `promotion-report.md` plus machine-checkable `promotion-report.json`.
+  Auto-apply only validated low-risk learning candidates; shadow high-risk global
+  safety, permission, deploy, publish, delete, secrets, or reviewer-policy changes
+  in `$CODEX_HOME/learning/improvement-backlog.jsonl` without asking the user. Do
+  not lower automation rate to collect learning data.
 - After any validated learning candidate is promoted in this repository, immediately
-  sync it into Codex global files with the installer, then commit and push the
-  repository update to GitHub. If the promotion changes the package version or
-  public release surface, also create/update the matching tag and GitHub Release.
-  Do not perform this sync for shadowed high-risk candidates.
+  sync it into Codex global files with the deterministic promotion script
+  (`node scripts/promote-learning.mjs --reviewer-result="<read-only reviewer verdict>"`)
+  or an equivalent validated sequence, then commit and push the repository update to
+  GitHub. If the promotion changes the package version or public release surface,
+  also create/update the matching tag and GitHub Release. Do not perform this sync
+  for shadowed high-risk candidates.
+- Any global-prompt, global-validation, or performance learning promotion must have
+  an independent read-only reviewer result in `promotion-report.json`. Main-agent
+  self-review alone is not enough for those categories.
+- Periodically run the cross-project learning summarizer
+  (`node scripts/summarize-learning.mjs`) to deduplicate `$CODEX_HOME` backlog items
+  and project-local improvement candidates before promotion.
 - Before editing a real project in a timed run, record a preflight covering absolute
   target path, Git status, stack, validation commands, risk areas, project size, and
   reviewer plan.

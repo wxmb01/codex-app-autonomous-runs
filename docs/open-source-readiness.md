@@ -14,6 +14,12 @@ Before publishing:
 - Confirm timed runs of 1 hour or more include reviewer-subagent authorization in
   the skill prompt template.
 - Confirm autonomous learning artifacts, schemas, and promotion gates are included.
+- Confirm `promotion-report.schema.json` requires install, commit, push, release,
+  and reviewer evidence.
+- Confirm `scripts/promote-learning.mjs`, `scripts/summarize-learning.mjs`, and
+  `scripts/github-release.mjs` are included and covered by dry-run tests.
+- Confirm the long-run simulation fixture represents at least 30 minutes of
+  project work with reviewer events, learning candidates, and promotion evidence.
 - Confirm high-risk global learning candidates are shadowed rather than
   auto-applied.
 - Confirm promoted learning iterations sync to installed global files and GitHub

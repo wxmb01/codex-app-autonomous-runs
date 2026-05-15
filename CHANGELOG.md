@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.8
+
+- Added deterministic learning promotion tooling with validation, global install,
+  manifest verification, commit, push, tag, GitHub Release, and promotion reports.
+- Added machine-checkable promotion-report and learning-summary schemas.
+- Added a cross-project learning summarizer for global backlog and project run
+  artifacts.
+- Required independent reviewer evidence for global prompt, validation, and
+  performance learning promotions.
+- Productized the GitHub Release API fallback as a reusable script.
+- Added a 45-minute long-run simulation fixture that covers reviewer events,
+  learning candidates, promotion evidence, and final retrospective validation.
+- Fixed the README Chinese introduction and documented the deterministic promotion
+  path.
+
 ## 0.1.7
 
 - Reworked the GitHub README into a richer project introduction covering the

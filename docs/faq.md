@@ -44,8 +44,24 @@ applied.
 Yes. In this repository, every promoted learning iteration must reinstall the
 managed global Codex files, verify the installed result, commit the focused update,
 and push it to GitHub. Versioned public changes also update the matching tag and
-GitHub Release. Shadowed high-risk candidates are recorded but not pushed as an
-automatic behavior change.
+GitHub Release. `promotion-report.json` records install result, commit SHA, push
+result, release URL, and reviewer result so the sync is machine-checkable.
+Shadowed high-risk candidates are recorded but not pushed as an automatic behavior
+change.
+
+## How are learning promotions made deterministic?
+
+Use `node scripts/promote-learning.mjs --reviewer-result="<verdict>"`. The script
+runs validation, hook benchmark, package dry-run, global install, manifest check,
+commit, push, tag, GitHub Release, and promotion report generation in one ordered
+pipeline. Global prompt, validation, and performance promotions require an
+independent read-only reviewer result.
+
+## Can it summarize lessons across projects?
+
+Yes. `node scripts/summarize-learning.mjs` scans `$CODEX_HOME/learning` and
+project run artifacts, deduplicates similar candidates, and writes a JSON plus
+Markdown summary for future promotion decisions.
 
 ## Why does uninstall keep some files?
 

@@ -1,0 +1,41 @@
+{
+  "required": [
+    "generated_at",
+    "codex_home",
+    "roots",
+    "sources",
+    "totals",
+    "top_candidates",
+    "recommended_promotions",
+    "invalid_lines"
+  ],
+  "properties": {
+    "generated_at": "ISO-8601 timestamp for the summary",
+    "codex_home": "Codex home scanned for global learning backlog",
+    "roots": "project roots scanned for active-run improvement candidates",
+    "sources": "JSONL files included in the summary",
+    "totals": {
+      "required": [
+        "sources",
+        "candidates",
+        "unique_candidates",
+        "invalid_lines",
+        "by_category",
+        "by_risk",
+        "by_decision"
+      ],
+      "properties": {
+        "sources": "number of JSONL sources",
+        "candidates": "total candidate rows parsed",
+        "unique_candidates": "deduplicated candidate count",
+        "invalid_lines": "invalid JSONL line count",
+        "by_category": "candidate counts by category",
+        "by_risk": "candidate counts by risk",
+        "by_decision": "candidate counts by promotion decision"
+      }
+    },
+    "top_candidates": "deduplicated candidates ordered by recurrence",
+    "recommended_promotions": "low/medium-risk non-release candidates suitable for validation",
+    "invalid_lines": "invalid JSONL locations and parse errors"
+  }
+}

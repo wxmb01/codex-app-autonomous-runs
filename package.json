@@ -1,6 +1,6 @@
 {
   "name": "codex-app-autonomous-runs",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "private": false,
   "type": "module",
   "description": "Codex App configuration templates for long autonomous project runs with reviewer agents, learning loops, and narrow safety guardrails.",
@@ -9,10 +9,14 @@
     "lint": "node tests/validate-open-source.js",
     "test:rules": "node tests/validate-rules.js",
     "test:example": "npm --prefix examples/medium-project test",
-    "test:all": "npm test && npm run test:rules && npm run test:example && npm --prefix codex-app-final-fixture test && npm run bench:hooks -- --iterations=10 --max-avg-ms=250",
+    "test:long-run": "node tests/validate-long-run-simulation.js",
+    "test:all": "npm test && npm run test:rules && npm run test:example && npm run test:long-run && npm --prefix codex-app-final-fixture test && npm run bench:hooks -- --iterations=10 --max-avg-ms=250",
     "install:dry-run": "node scripts/install.mjs --dry-run --merge",
     "uninstall:dry-run": "node scripts/uninstall.mjs --dry-run",
-    "bench:hooks": "node scripts/bench-hooks.mjs"
+    "bench:hooks": "node scripts/bench-hooks.mjs",
+    "learning:summary": "node scripts/summarize-learning.mjs",
+    "github:release": "node scripts/github-release.mjs",
+    "promote:learning": "node scripts/promote-learning.mjs"
   },
   "keywords": [
     "codex",

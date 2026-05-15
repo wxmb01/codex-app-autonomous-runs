@@ -1,0 +1,16 @@
+{
+  "run_id": "medium-dashboard-hardening",
+  "target": "/workspace/examples/long-run-simulation",
+  "goal": "Simulate a medium-project Codex App active session that validates implementation, reviewer, learning, and promotion behavior.",
+  "completed_at": "2026-01-01T00:45:00Z",
+  "outcome": "completed",
+  "automation_friction": "Promotion was too dependent on prose rules before deterministic scripting.",
+  "validation_gaps": "Promotion-report fields and cross-project learning summaries needed explicit machine validation.",
+  "reviewer_findings": "Reviewer required release URL and reviewer binding evidence before readiness.",
+  "repeated_failures": "No repeated command failures in the simulated run.",
+  "learning_candidates": "3 candidates generated: global-validation, performance, and high-risk global-safety shadow.",
+  "auto_applied": "2 low/medium-risk candidates represented as applied after validation.",
+  "shadowed": "1 high-risk global-safety candidate shadowed.",
+  "rejected": "0 rejected candidates.",
+  "next_run_adjustments": "Use deterministic promote-learning.mjs and summarize-learning.mjs before claiming learning promotion readiness."
+}

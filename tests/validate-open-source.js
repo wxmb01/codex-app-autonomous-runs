@@ -88,9 +88,24 @@ const requiredFiles = [
   "scripts/Install-CodexAppAutonomous.ps1",
   "scripts/Uninstall-CodexAppAutonomous.ps1",
   "scripts/bench-hooks.mjs",
+  "scripts/github-release.mjs",
   "scripts/install.mjs",
+  "scripts/promote-learning.mjs",
+  "scripts/summarize-learning.mjs",
   "scripts/uninstall.mjs",
+  "tests/validate-long-run-simulation.js",
   "tests/validate-rules.js",
+  "examples/long-run-simulation/README.md",
+  "examples/long-run-simulation/package.json",
+  "examples/long-run-simulation/src/workflow.js",
+  "examples/long-run-simulation/tests/validate.js",
+  "examples/long-run-simulation/codex-app-active-runs/current",
+  "examples/long-run-simulation/codex-app-active-runs/medium-dashboard-hardening/run-state.json",
+  "examples/long-run-simulation/codex-app-active-runs/medium-dashboard-hardening/progress.jsonl",
+  "examples/long-run-simulation/codex-app-active-runs/medium-dashboard-hardening/improvement-candidates.jsonl",
+  "examples/long-run-simulation/codex-app-active-runs/medium-dashboard-hardening/promotion-report.json",
+  "examples/long-run-simulation/codex-app-active-runs/medium-dashboard-hardening/promotion-report.md",
+  "examples/long-run-simulation/codex-app-active-runs/medium-dashboard-hardening/run-retrospective.json",
   "examples/medium-project/README.md",
   "examples/medium-project/package.json",
   "examples/medium-project/src/policy.js",
@@ -105,6 +120,8 @@ const requiredFiles = [
   "templates/codex/skills/timed-autonomous-run/schemas/progress-event.schema.json",
   "templates/codex/skills/timed-autonomous-run/schemas/run-state.schema.json",
   "templates/codex/skills/timed-autonomous-run/schemas/improvement-candidate.schema.json",
+  "templates/codex/skills/timed-autonomous-run/schemas/learning-summary.schema.json",
+  "templates/codex/skills/timed-autonomous-run/schemas/promotion-report.schema.json",
   "templates/codex/skills/timed-autonomous-run/schemas/run-retrospective.schema.json"
 ];
 
@@ -166,9 +183,13 @@ assert.ok(packageJson.files.includes("scripts/"));
 assert.ok(packageJson.scripts["install:dry-run"]);
 assert.ok(packageJson.scripts["uninstall:dry-run"]);
 assert.ok(packageJson.scripts["test:example"]);
+assert.ok(packageJson.scripts["test:long-run"]);
 assert.ok(packageJson.scripts["test:rules"]);
 assert.ok(packageJson.scripts["test:all"]);
 assert.ok(packageJson.scripts["bench:hooks"]);
+assert.ok(packageJson.scripts["learning:summary"]);
+assert.ok(packageJson.scripts["github:release"]);
+assert.ok(packageJson.scripts["promote:learning"]);
 
 const agentsMd = read(join(templateRoot, "AGENTS.md"));
 const skillMd = read(join(templateRoot, "skills/timed-autonomous-run/SKILL.md"));
@@ -186,10 +207,18 @@ assert.ok(compactAgentsMd.includes("improvement-backlog.jsonl"));
 assert.ok(compactAgentsMd.includes("Do not lower automation rate"));
 assert.ok(compactAgentsMd.includes("sync it into Codex global files"));
 assert.ok(compactAgentsMd.includes("commit and push the repository update to GitHub"));
+assert.ok(compactAgentsMd.includes("promotion-report.json"));
+assert.ok(compactAgentsMd.includes("promote-learning.mjs"));
+assert.ok(compactAgentsMd.includes("summarize-learning.mjs"));
+assert.ok(compactAgentsMd.includes("Main-agent self-review alone is not enough"));
 assert.ok(compactSkillMd.includes("Autonomous Learning Loop"));
 assert.ok(compactSkillMd.includes("lessons-learned.md"));
 assert.ok(compactSkillMd.includes("improvement-candidates.jsonl"));
 assert.ok(compactSkillMd.includes("promotion-report.md"));
+assert.ok(compactSkillMd.includes("promotion-report.json"));
+assert.ok(compactSkillMd.includes("promotion-report.schema.json"));
+assert.ok(compactSkillMd.includes("promote-learning.mjs"));
+assert.ok(compactSkillMd.includes("summarize-learning.mjs"));
 assert.ok(compactSkillMd.includes("improvement-backlog.jsonl"));
 assert.ok(compactSkillMd.includes("High-risk candidates are never auto-applied"));
 assert.ok(compactSkillMd.includes("Post-promotion sync"));
@@ -206,7 +235,13 @@ assert.ok(readme.includes("Autonomous Learning Loop"));
 assert.ok(readme.includes("What This Adds"));
 assert.ok(readme.includes("CLI/local runner"));
 assert.ok(readme.includes("every promoted learning iteration also syncs"));
+assert.ok(readme.includes("Deterministic Promotion"));
+assert.ok(readme.includes("中文"));
+assert.equal(readme.includes("涓"), false);
+assert.equal(readme.includes("鏄"), false);
+assert.equal(readme.includes("瀹"), false);
 assert.ok(faq.includes("every promoted learning iteration must reinstall"));
+assert.ok(faq.includes("promotion-report.json"));
 
 assert.deepEqual(readPngSize(join(repoRoot, "docs/assets/promo-en.png")), { width: 1280, height: 640 });
 assert.deepEqual(readPngSize(join(repoRoot, "docs/assets/promo-zh.png")), { width: 1280, height: 640 });
@@ -237,6 +272,8 @@ for (const schema of [
   "progress-event.schema.json",
   "run-state.schema.json",
   "improvement-candidate.schema.json",
+  "learning-summary.schema.json",
+  "promotion-report.schema.json",
   "run-retrospective.schema.json"
 ]) {
   const data = JSON.parse(read(join(templateRoot, "skills/timed-autonomous-run/schemas", schema)));
@@ -252,6 +289,16 @@ for (const field of ["category", "risk", "promotion_decision", "status"]) {
 }
 assert.ok(improvementSchema.properties.category.includes("documentation"));
 assert.ok(improvementSchema.properties.category.includes("performance"));
+const promotionSchema = JSON.parse(read(join(
+  templateRoot,
+  "skills/timed-autonomous-run/schemas/promotion-report.schema.json"
+)));
+for (const field of ["install_result", "git", "github", "reviewer", "steps"]) {
+  assert.ok(promotionSchema.required.includes(field), `promotion schema missing ${field}`);
+}
+assert.ok(promotionSchema.reviewer_required_for_categories.includes("global-prompt"));
+assert.ok(promotionSchema.reviewer_required_for_categories.includes("global-validation"));
+assert.ok(promotionSchema.reviewer_required_for_categories.includes("performance"));
 
 const rules = read(join(templateRoot, "rules/autonomous-safety.rules"));
 assert.ok(rules.includes('pattern=["npm", "publish"]'));
@@ -324,6 +371,49 @@ function makeLearningCandidate(overrides = {}) {
   };
 }
 
+function makePromotionReport(overrides = {}) {
+  return {
+    generated_at: "2026-01-01T00:00:00+00:00",
+    repository: "stop-hook-test",
+    version: "0.0.0",
+    status: "pending",
+    promotion: {
+      categories: ["documentation"],
+      changed_files: [],
+      candidate_files: [],
+      validation_policy: "stop hook validation fixture"
+    },
+    validation: [],
+    install_result: {
+      status: "skipped",
+      codex_home: "stop-hook-test",
+      manifest_version: "0.0.0"
+    },
+    git: {
+      branch: "main",
+      commit_sha: "pending",
+      tag: null
+    },
+    github: {
+      push_result: {
+        status: "skipped"
+      },
+      release: {
+        status: "skipped"
+      }
+    },
+    reviewer: {
+      required: false,
+      used: false,
+      agent_type: "none",
+      result: "",
+      findings: "not required for fixture"
+    },
+    steps: [],
+    ...overrides
+  };
+}
+
 function createRunningActiveRun(prefix, runName, options = {}) {
   const root = mkdtempSync(join(tmpdir(), prefix));
   const activeRoot = join(root, ".codex/app-active-runs");
@@ -352,6 +442,9 @@ function createRunningActiveRun(prefix, runName, options = {}) {
     run_id: runName
   }))}\n`);
   writeFileSync(join(runDir, "promotion-report.md"), "# Promotion Report\n\n- auto_applied: 1\n");
+  if (options.writePromotionJson !== false) {
+    writeFileSync(join(runDir, "promotion-report.json"), `${JSON.stringify(options.promotionReport ?? makePromotionReport())}\n`);
+  }
   return { root, runDir };
 }
 
@@ -472,6 +565,35 @@ const validLearning = createRunningActiveRun("codex-valid-learning-", "valid-lea
 const validLearningBlock = JSON.parse(runPython(stopHook, { cwd: validLearning.root, stop_hook_active: false }));
 assert.equal(validLearningBlock.decision, "block");
 assert.ok(validLearningBlock.reason.includes("Continue the next cycle"));
+
+const missingPromotionJson = createRunningActiveRun("codex-missing-promotion-json-", "missing-promotion-json", {
+  writePromotionJson: false
+});
+const missingPromotionJsonBlock = JSON.parse(runPython(stopHook, { cwd: missingPromotionJson.root, stop_hook_active: false }));
+assert.equal(missingPromotionJsonBlock.decision, "block");
+assert.ok(missingPromotionJsonBlock.reason.includes("promotion-report.json"));
+
+const missingReviewerPromotion = createRunningActiveRun("codex-missing-reviewer-promotion-", "missing-reviewer-promotion", {
+  promotionReport: makePromotionReport({
+    status: "passed",
+    promotion: {
+      categories: ["global-validation"],
+      changed_files: ["templates/codex/AGENTS.md"],
+      candidate_files: [],
+      validation_policy: "full validation"
+    },
+    reviewer: {
+      required: true,
+      used: false,
+      agent_type: "autonomous_reviewer",
+      result: "",
+      findings: "missing reviewer"
+    }
+  })
+});
+const missingReviewerPromotionBlock = JSON.parse(runPython(stopHook, { cwd: missingReviewerPromotion.root, stop_hook_active: false }));
+assert.equal(missingReviewerPromotionBlock.decision, "block");
+assert.ok(missingReviewerPromotionBlock.reason.includes("require reviewer result"));
 
 const highRiskLearning = createRunningActiveRun("codex-high-risk-learning-", "high-risk-learning", {
   candidate: makeLearningCandidate({
@@ -620,8 +742,15 @@ const packOutput = JSON.parse(execSync(packCommand, {
 const packedFiles = packOutput.files.map((file) => file.path);
 assert.ok(packedFiles.includes("templates/codex/skills/timed-autonomous-run/SKILL.md"));
 assert.ok(packedFiles.includes("templates/codex/skills/timed-autonomous-run/schemas/improvement-candidate.schema.json"));
+assert.ok(packedFiles.includes("templates/codex/skills/timed-autonomous-run/schemas/learning-summary.schema.json"));
+assert.ok(packedFiles.includes("templates/codex/skills/timed-autonomous-run/schemas/promotion-report.schema.json"));
 assert.ok(packedFiles.includes("templates/codex/skills/timed-autonomous-run/schemas/run-retrospective.schema.json"));
+assert.ok(packedFiles.includes("scripts/promote-learning.mjs"));
+assert.ok(packedFiles.includes("scripts/summarize-learning.mjs"));
+assert.ok(packedFiles.includes("scripts/github-release.mjs"));
+assert.ok(packedFiles.includes("tests/validate-long-run-simulation.js"));
 assert.ok(packedFiles.includes("tests/validate-rules.js"));
+assert.ok(packedFiles.includes("examples/long-run-simulation/README.md"));
 assert.ok(packedFiles.includes(".github/workflows/validate.yml"));
 assert.equal(packedFiles.some((file) => file.includes(".codex/app-active-runs")), false);
 assert.equal(packedFiles.some((file) => file.includes("__pycache__") || file.endsWith(".pyc")), false);
@@ -630,6 +759,44 @@ const exampleOutput = execFileSync("node", [join(repoRoot, "examples/medium-proj
   encoding: "utf8"
 });
 assert.ok(exampleOutput.includes("medium example validation passed"));
+
+const longRunOutput = execFileSync("node", [join(repoRoot, "tests/validate-long-run-simulation.js")], {
+  encoding: "utf8"
+});
+assert.ok(longRunOutput.includes("long-run simulation validation passed"));
+
+const summaryPreview = execFileSync("node", [
+  join(repoRoot, "scripts/summarize-learning.mjs"),
+  "--dry-run",
+  `--codex-home=${installHome}`,
+  `--root=${join(repoRoot, "examples/long-run-simulation")}`
+], { encoding: "utf8" });
+const summaryJson = JSON.parse(summaryPreview);
+assert.ok(summaryJson.totals.candidates >= 3);
+assert.ok(summaryJson.recommended_promotions.length >= 1);
+
+const promotionDryRunDir = join(mkdtempSync(join(tmpdir(), "codex-promotion-dry-run-")), "report");
+const promotionDryRun = execFileSync("node", [
+  join(repoRoot, "scripts/promote-learning.mjs"),
+  "--dry-run",
+  "--allow-no-changes",
+  "--allow-branch",
+  `--report-dir=${promotionDryRunDir}`,
+  "--reviewer-result=open-source-test-reviewer"
+], { encoding: "utf8" });
+assert.ok(promotionDryRun.includes("Promotion report JSON"));
+assert.equal(existsSync(promotionDryRunDir), false, "promotion dry-run must not write report files");
+
+const githubReleaseDryRun = execFileSync("node", [
+  join(repoRoot, "scripts/github-release.mjs"),
+  "--dry-run",
+  "--repo=wxmb01/codex-app-autonomous-runs",
+  "--tag=v0.0.0-test",
+  "--target=0000000000000000000000000000000000000000",
+  "--title=v0.0.0-test",
+  "--notes=release dry run"
+], { encoding: "utf8" });
+assert.ok(githubReleaseDryRun.includes("create-or-update-github-release"));
 
 const hookBenchOutput = execFileSync("node", [
   join(repoRoot, "scripts/bench-hooks.mjs"),

@@ -1,0 +1,8 @@
+{
+  "name": "codex-long-run-simulation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/validate.js"
+  }
+}

@@ -9,7 +9,7 @@ For no-pause or no-idle requests, the intended behavior is:
 3. Write `.codex/app-active-runs/current` with the active run name for fast resume.
 4. Create learning artifacts in the same run directory:
    `lessons-learned.md`, `improvement-candidates.jsonl`, and
-   `promotion-report.md`.
+   `promotion-report.md` plus machine-checkable `promotion-report.json`.
 5. Keep working in short cycles: inspect, edit, validate, self-review, record
    learning candidates when useful, log, continue.
 6. Use read-only reviewer agents for medium and large projects.
@@ -34,7 +34,14 @@ babysitting:
   reviewer-policy candidates to `$CODEX_HOME/learning/improvement-backlog.jsonl`
   instead of silently applying them.
 - Keep promotion decisions and validation evidence in `promotion-report.md`.
+- Keep install result, commit SHA, push result, release URL, and reviewer result in
+  `promotion-report.json`.
 - For this repository, each promoted learning iteration must also update the
-  installed Codex global files with `node scripts/install.mjs --merge`, commit the
-  focused diff, and push the update to GitHub. Versioned public changes also update
-  the matching tag and GitHub Release.
+  installed Codex global files, commit the focused diff, and push the update to
+  GitHub. Prefer `node scripts/promote-learning.mjs --reviewer-result="<verdict>"`
+  so validation, global install, manifest checks, commit, push, tag, release, and
+  promotion report generation are deterministic. Versioned public changes also
+  update the matching tag and GitHub Release.
+- Use `node scripts/summarize-learning.mjs` to deduplicate learning candidates
+  across `$CODEX_HOME/learning/improvement-backlog.jsonl` and project-local active
+  run artifacts before promotion.

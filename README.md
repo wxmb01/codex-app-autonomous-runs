@@ -19,10 +19,11 @@ who want Codex App to keep driving real projects for long active sessions instea
 of stopping after every small step.
 
 It installs global Codex rules, a timed autonomous-run skill, narrow safety hooks,
-machine-checkable progress logs, read-only reviewer agents, and an autonomous
-learning loop. The operating model is simple: normal engineering work keeps moving,
-reviewers audit completeness, reusable lessons are promoted after validation, and
-only especially dangerous actions are held for a human checkpoint.
+machine-checkable progress logs, read-only reviewer agents, deterministic learning
+promotion tools, and an autonomous learning loop. The operating model is simple:
+normal engineering work keeps moving, reviewers audit completeness, reusable
+lessons are promoted after validation, and only especially dangerous actions are
+held for a human checkpoint.
 
 This project is intentionally Codex App first. It does not require a CLI/local
 runner to simulate continuous work.
@@ -33,14 +34,15 @@ runner to simulate continuous work.
 <summary>中文</summary>
 
 Codex App Autonomous Runs 是一套面向 Codex App 的全局自动化配置模板，用来让
-Codex 在中大型项目里持续推进，而不是每完成一步就停下来等用户说“继续”。
+Codex 在中大型项目里持续推进，而不是每完成一步就停下来等待用户说“继续”。
 
-它会安装全局 `AGENTS.md` 规则、`timed-autonomous-run` 技能、窄范围安全 hooks、
-机器可校验的进度日志、只读审查子代理，以及自我学习迭代闭环。整体策略是：
-常规开发持续自动执行，审查代理负责完整性和风险检查，可复用经验在验证后自动晋升，
-只有发布、部署、基础设施变更、递归强删、密钥写入等特别危险动作才保留人工确认。
+它会安装全局 `AGENTS.md` 规则、`timed-autonomous-run` 技能、窄范围安全
+hooks、机器可校验的进度日志、只读审查子代理、确定性的学习晋升脚本，以及自我
+学习迭代闭环。整体策略是：常规工程工作持续自动执行，审查代理负责完整性和风险
+检查，可复用经验在验证后自动晋升，只有发布、部署、基础设施变更、递归强删、密钥
+写入等特别危险动作才保留人工确认。
 
-这个项目坚持 Codex App 优先，不依赖 CLI/local runner 来伪装持续运行。
+这个项目坚持 Codex App 优先，不依赖 CLI/local runner 来模拟持续运行。
 
 </details>
 
@@ -62,7 +64,12 @@ execution environment:
   - `lessons-learned.md`
   - `improvement-candidates.jsonl`
   - `promotion-report.md`
+  - `promotion-report.json`
   - `$CODEX_HOME/learning/improvement-backlog.jsonl`
+- Deterministic promotion scripts for validation, global install, manifest checks,
+  commit, push, tag, GitHub Release, and promotion reports.
+- Cross-project learning summarization across `$CODEX_HOME` backlog files and
+  project-local run artifacts.
 - Read-only reviewer agents for completeness, security, tests, architecture, and
   UI/artifact review.
 - Narrow safety rules and hooks that block high-impact irreversible actions while
@@ -108,6 +115,23 @@ Promotion policy:
 For this repository, every promoted learning iteration also syncs into the installed
 Codex global files and is pushed to GitHub. Versioned public changes update the
 matching tag and GitHub Release.
+
+## Deterministic Promotion
+
+Learning promotion is no longer only a prose rule. The repository includes
+deterministic scripts for the full release-grade path:
+
+```powershell
+node scripts/summarize-learning.mjs --dry-run
+node scripts/promote-learning.mjs --reviewer-result="<read-only reviewer verdict>"
+node scripts/github-release.mjs --dry-run --tag=v0.1.8 --target=<commit-sha>
+```
+
+`promote-learning.mjs` runs validation, the 30-iteration hook benchmark, package
+dry-run, global install, manifest verification, commit, push, tag, release, and
+promotion report generation. Promotions that touch global prompt, validation, or
+performance behavior must include an independent read-only reviewer result in
+`promotion-report.json`.
 
 ## Safety Boundary
 
@@ -189,8 +213,14 @@ npm run test:all
 ```
 
 The full validation checks template completeness, safety-rule semantics, example
-projects, final fixture behavior, hook performance, package hygiene, and obvious
-secret or personal-path leaks.
+projects, long-run simulation evidence, final fixture behavior, hook performance,
+package hygiene, and obvious secret or personal-path leaks.
+
+The long-run fixture can be checked directly:
+
+```powershell
+npm run test:long-run
+```
 
 ## Uninstall
 
@@ -222,6 +252,7 @@ managed files and managed hook entries.
 - [Installation guide](docs/installation.md)
 - [Open-source readiness checklist](docs/open-source-readiness.md)
 - [Medium project example](examples/medium-project)
+- [Long-run simulation fixture](examples/long-run-simulation)
 
 ## Important Limitations
 

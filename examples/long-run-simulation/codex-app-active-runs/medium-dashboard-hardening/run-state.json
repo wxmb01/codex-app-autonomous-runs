@@ -1,0 +1,15 @@
+{
+  "run_id": "medium-dashboard-hardening",
+  "target": "/workspace/examples/long-run-simulation",
+  "goal": "Simulate a medium-project Codex App active session that validates implementation, reviewer, learning, and promotion behavior.",
+  "mode": "app_active_session",
+  "status": "completed",
+  "stop_guard": false,
+  "start_time": "2026-01-01T00:00:00Z",
+  "deadline": "2026-01-01T00:45:00Z",
+  "last_cycle_at": "2026-01-01T00:45:00Z",
+  "completed_cycles": 6,
+  "project_size": "medium",
+  "current_phase": "final_review",
+  "stop_reason": "completed_after_validation_reviewer_learning_and_promotion_evidence"
+}

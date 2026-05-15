@@ -166,15 +166,18 @@ For App-only active sessions, create:
 .codex/app-active-runs/<run-name>/lessons-learned.md
 .codex/app-active-runs/<run-name>/improvement-candidates.jsonl
 .codex/app-active-runs/<run-name>/promotion-report.md
+.codex/app-active-runs/<run-name>/promotion-report.json
 .codex/app-active-runs/current
 ```
 
 Use the schemas in `schemas/run-state.schema.json` and
 `schemas/progress-event.schema.json`. For learning outputs, use
-`schemas/improvement-candidate.schema.json` and
-`schemas/run-retrospective.schema.json`. Keep `progress.md` and
-`lessons-learned.md` human-readable, while `progress.jsonl` and
-`improvement-candidates.jsonl` remain machine-checkable.
+`schemas/improvement-candidate.schema.json`,
+`schemas/promotion-report.schema.json`, `schemas/learning-summary.schema.json`,
+and `schemas/run-retrospective.schema.json`. Keep `progress.md`,
+`promotion-report.md`, and `lessons-learned.md` human-readable, while
+`progress.jsonl`, `promotion-report.json`, and `improvement-candidates.jsonl`
+remain machine-checkable.
 
 ## Prompt Template
 
@@ -399,6 +402,9 @@ Promotion validation:
 - For global-prompt or global-validation candidates in this repository, run
   `npm run test:all`, `npm run bench:hooks -- --iterations=30 --max-avg-ms=200`,
   install/uninstall round-trip checks, and package dry-run before promotion.
+- For global-prompt, global-validation, or performance candidates in this
+  repository, the promotion report must include an independent read-only reviewer
+  result. Do not mark the promotion complete with main-agent self-review alone.
 - For changed global behavior, perform self-review and, when subagents are
   available, one read-only reviewer pass before claiming readiness.
 - If validation fails, revert only the candidate's own changes, record `status =
@@ -406,6 +412,11 @@ Promotion validation:
 
 Post-promotion sync:
 
+- Prefer the deterministic promotion script for repository learning promotions:
+  `node scripts/promote-learning.mjs --reviewer-result="<read-only reviewer verdict>"`.
+  It validates, installs global files, verifies the manifest, commits, pushes, tags
+  versioned releases, creates/updates the GitHub Release, and writes both
+  `promotion-report.json` and `promotion-report.md`.
 - For every auto-applied learning candidate in this repository, run
   `node scripts/install.mjs --merge` after validation so `$CODEX_HOME` receives the
   new global rules, skills, hooks, schemas, and agents immediately.
@@ -418,9 +429,12 @@ Post-promotion sync:
   templates, or open-source release notes, create or update the matching Git tag and
   GitHub Release.
 - Record global install result, GitHub commit SHA, tag/release result, and any retry
-  or fallback in `promotion-report.md`.
+  or fallback in `promotion-report.json` and `promotion-report.md`.
 - Do not run post-promotion sync for shadowed high-risk candidates; record them only
   in `$CODEX_HOME/learning/improvement-backlog.jsonl`.
+- Periodically summarize cross-project learning with
+  `node scripts/summarize-learning.mjs`. Use the output to deduplicate repeated
+  candidates before promotion.
 
 Retrospective cadence:
 
@@ -454,6 +468,7 @@ For App-only active sessions, use the stricter project-local paths:
 - `.codex/app-active-runs/<run-name>/lessons-learned.md`
 - `.codex/app-active-runs/<run-name>/improvement-candidates.jsonl`
 - `.codex/app-active-runs/<run-name>/promotion-report.md`
+- `.codex/app-active-runs/<run-name>/promotion-report.json`
 - `.codex/app-active-runs/current`
 
 Each `progress.jsonl` line must include `timestamp`, `cycle`, `phase`,

@@ -129,10 +129,15 @@ def learning_ready(run_dir):
         "lessons-learned.md",
         "improvement-candidates.jsonl",
         "promotion-report.md",
+        "promotion-report.json",
     ]
     missing_files = [name for name in required_files if not (run_dir / name).exists()]
     if missing_files:
         return False, "missing learning artifacts: " + ", ".join(missing_files)
+
+    ok, detail = promotion_report_ready(run_dir / "promotion-report.json")
+    if not ok:
+        return False, detail
 
     candidates_path = run_dir / "improvement-candidates.jsonl"
     try:
@@ -230,6 +235,108 @@ def learning_ready(run_dir):
     return True, ""
 
 
+def nonempty_string(value):
+    return isinstance(value, str) and bool(value.strip())
+
+
+def string_list(value):
+    return isinstance(value, list) and all(nonempty_string(item) for item in value)
+
+
+def promotion_report_ready(path):
+    try:
+        report = json.loads(path.read_text(encoding="utf-8-sig"))
+    except Exception:
+        return False, "promotion-report.json is missing or not valid JSON"
+
+    required = [
+        "generated_at",
+        "repository",
+        "version",
+        "status",
+        "promotion",
+        "validation",
+        "install_result",
+        "git",
+        "github",
+        "reviewer",
+        "steps",
+    ]
+    missing = [key for key in required if key not in report]
+    if missing:
+        return False, "promotion-report.json missing: " + ", ".join(missing)
+
+    if report.get("status") not in {"pending", "passed", "failed", "dry-run", "skipped"}:
+        return False, f"promotion-report.json has invalid status: {report.get('status')!r}"
+
+    promotion = report.get("promotion")
+    if not isinstance(promotion, dict):
+        return False, "promotion-report.json promotion must be an object"
+    for key in ["categories", "changed_files", "candidate_files"]:
+        if key not in promotion:
+            return False, f"promotion-report.json promotion missing {key}"
+    categories = promotion.get("categories")
+    if not string_list(categories):
+        return False, "promotion-report.json promotion.categories must be a list of strings"
+    if not isinstance(promotion.get("changed_files"), list):
+        return False, "promotion-report.json promotion.changed_files must be a list"
+    if not isinstance(promotion.get("candidate_files"), list):
+        return False, "promotion-report.json promotion.candidate_files must be a list"
+    if not nonempty_string(promotion.get("validation_policy")):
+        return False, "promotion-report.json promotion.validation_policy is required"
+
+    validation = report.get("validation")
+    if not isinstance(validation, list):
+        return False, "promotion-report.json validation must be a list"
+
+    install_result = report.get("install_result")
+    if not isinstance(install_result, dict) or not nonempty_string(install_result.get("status")):
+        return False, "promotion-report.json install_result.status is required"
+    if not nonempty_string(install_result.get("codex_home")):
+        return False, "promotion-report.json install_result.codex_home is required"
+    if not nonempty_string(install_result.get("manifest_version")):
+        return False, "promotion-report.json install_result.manifest_version is required"
+
+    git = report.get("git")
+    if not isinstance(git, dict) or not nonempty_string(git.get("branch")):
+        return False, "promotion-report.json git.branch is required"
+    if not nonempty_string(git.get("commit_sha")):
+        return False, "promotion-report.json git.commit_sha is required"
+
+    github = report.get("github")
+    if not isinstance(github, dict) or not isinstance(github.get("push_result"), dict):
+        return False, "promotion-report.json github.push_result is required"
+    if not nonempty_string(github["push_result"].get("status")):
+        return False, "promotion-report.json github.push_result.status is required"
+    release = github.get("release")
+    if not isinstance(release, dict):
+        return False, "promotion-report.json github.release is required"
+    release_status = release.get("status")
+    if release_status in {"success", "passed", "created", "updated"}:
+        release_url = release.get("release_url") or release.get("url")
+        if not nonempty_string(release_url):
+            return False, "promotion-report.json github.release release_url is required for successful releases"
+
+    reviewer = report.get("reviewer")
+    if not isinstance(reviewer, dict):
+        return False, "promotion-report.json reviewer is required"
+    if not isinstance(reviewer.get("required"), bool):
+        return False, "promotion-report.json reviewer.required must be boolean"
+    if not isinstance(reviewer.get("used"), bool):
+        return False, "promotion-report.json reviewer.used must be boolean"
+    if not nonempty_string(reviewer.get("agent_type")):
+        return False, "promotion-report.json reviewer.agent_type is required"
+    required_review_categories = {"global-prompt", "global-validation", "performance"}
+    if required_review_categories.intersection(set(categories)):
+        if reviewer.get("used") is not True or not nonempty_string(reviewer.get("result")):
+            return False, "global prompt, validation, and performance promotions require reviewer result"
+
+    if not isinstance(report.get("steps"), list):
+        return False, "promotion-report.json steps must be a list"
+
+    return True, ""
+
+
 def main():
     event = read_event()
     if event.get("stop_hook_active") is True:
@@ -253,8 +360,8 @@ def main():
     if not ok:
         emit_block(
             f"Autonomous run is still active but learning artifacts are incomplete ({detail}). "
-            f"Update lessons-learned.md, improvement-candidates.jsonl, and promotion-report.md, "
-            f"then continue the next useful cycle."
+            f"Update lessons-learned.md, improvement-candidates.jsonl, promotion-report.md, "
+            f"promotion-report.json, then continue the next useful cycle."
         )
         return
 
