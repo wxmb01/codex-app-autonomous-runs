@@ -39,6 +39,14 @@ High-risk global safety, permission, deploy, publish, delete, secrets, and
 reviewer-policy changes are shadowed in the backlog instead of being silently
 applied.
 
+## Will learning updates reach my global Codex files and GitHub?
+
+Yes. In this repository, every promoted learning iteration must reinstall the
+managed global Codex files, verify the installed result, commit the focused update,
+and push it to GitHub. Versioned public changes also update the matching tag and
+GitHub Release. Shadowed high-risk candidates are recorded but not pushed as an
+automatic behavior change.
+
 ## Why does uninstall keep some files?
 
 Install writes a manifest with SHA-256 hashes for managed files. Uninstall removes

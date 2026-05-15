@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.6
+
+- Added post-promotion sync rules so every validated learning iteration updates
+  the installed Codex global files and pushes the repository state to GitHub.
+- Clarified that high-risk shadowed learning candidates do not trigger automatic
+  global install, GitHub push, tag, or release.
+
 ## 0.1.5
 
 - Added an autonomous learning loop for timed and App-only active runs.

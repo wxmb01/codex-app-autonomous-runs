@@ -25,6 +25,10 @@ validated low-risk documentation, prompt, validation, performance, and project-l
 improvements, but it does not auto-relax safety rules, deploy/publish/delete
 permissions, secrets handling, or reviewer requirements.
 
+Post-promotion sync to global files and GitHub is allowed only after validation for
+auto-applied low-risk or medium-risk learning candidates. Shadowed high-risk
+candidates stay in the backlog and do not trigger install, push, tag, or release.
+
 For performance, command blocking is handled by the prefix-based rules file, while
 the default `PreToolUse` hook is attached only to write/patch tools for secret and
 private-key write checks. The rules file is fast and intentionally narrow. It

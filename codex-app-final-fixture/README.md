@@ -17,4 +17,6 @@ project-completeness review lane.
   blockers, and next actions.
 - Learning artifacts record lessons, improvement candidates, promotion decisions,
   and shadowed high-risk global changes.
+- Promoted learning iterations sync installed global files and GitHub after
+  validation.
 - Risky actions remain human checkpoints.

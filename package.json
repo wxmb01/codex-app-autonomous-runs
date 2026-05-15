@@ -1,6 +1,6 @@
 {
   "name": "codex-app-autonomous-runs",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": false,
   "type": "module",
   "description": "Codex App configuration templates for long active autonomous project runs with review lanes and narrow safety guardrails.",

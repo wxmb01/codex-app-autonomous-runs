@@ -49,6 +49,11 @@ Default behavior:
   shadow high-risk global safety, permission, deploy, publish, delete, secrets, or
   reviewer-policy changes in `$CODEX_HOME/learning/improvement-backlog.jsonl`
   without asking the user. Do not lower automation rate to collect learning data.
+- After any validated learning candidate is promoted in this repository, immediately
+  sync it into Codex global files with the installer, then commit and push the
+  repository update to GitHub. If the promotion changes the package version or
+  public release surface, also create/update the matching tag and GitHub Release.
+  Do not perform this sync for shadowed high-risk candidates.
 - Before editing a real project in a timed run, record a preflight covering absolute
   target path, Git status, stack, validation commands, risk areas, project size, and
   reviewer plan.

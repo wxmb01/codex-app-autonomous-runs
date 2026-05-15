@@ -175,14 +175,25 @@ assert.ok(compactAgentsMd.includes("autonomous learning artifacts"));
 assert.ok(compactAgentsMd.includes("improvement-candidates.jsonl"));
 assert.ok(compactAgentsMd.includes("improvement-backlog.jsonl"));
 assert.ok(compactAgentsMd.includes("Do not lower automation rate"));
+assert.ok(compactAgentsMd.includes("sync it into Codex global files"));
+assert.ok(compactAgentsMd.includes("commit and push the repository update to GitHub"));
 assert.ok(compactSkillMd.includes("Autonomous Learning Loop"));
 assert.ok(compactSkillMd.includes("lessons-learned.md"));
 assert.ok(compactSkillMd.includes("improvement-candidates.jsonl"));
 assert.ok(compactSkillMd.includes("promotion-report.md"));
 assert.ok(compactSkillMd.includes("improvement-backlog.jsonl"));
 assert.ok(compactSkillMd.includes("High-risk candidates are never auto-applied"));
+assert.ok(compactSkillMd.includes("Post-promotion sync"));
+assert.ok(compactSkillMd.includes("node scripts/install.mjs --merge"));
+assert.ok(compactSkillMd.includes("push `main` to GitHub"));
+assert.ok(compactSkillMd.includes("GitHub API fallback"));
 assert.ok(compactSkillMd.includes("documentation"));
 assert.ok(compactSkillMd.includes("performance"));
+
+const readme = read(join(repoRoot, "README.md"));
+const faq = read(join(repoRoot, "docs/faq.md"));
+assert.ok(readme.includes("every promoted learning iteration also syncs"));
+assert.ok(faq.includes("every promoted learning iteration must reinstall"));
 
 const agentFiles = [
   "autonomous_reviewer.toml",

@@ -34,3 +34,7 @@ babysitting:
   reviewer-policy candidates to `$CODEX_HOME/learning/improvement-backlog.jsonl`
   instead of silently applying them.
 - Keep promotion decisions and validation evidence in `promotion-report.md`.
+- For this repository, each promoted learning iteration must also update the
+  installed Codex global files with `node scripts/install.mjs --merge`, commit the
+  focused diff, and push the update to GitHub. Versioned public changes also update
+  the matching tag and GitHub Release.

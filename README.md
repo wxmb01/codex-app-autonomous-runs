@@ -165,6 +165,10 @@ validation, and performance improvements may be auto-applied. High-risk global
 safety, permission, deploy, publish, delete, secrets, and reviewer-policy changes
 are written to the shadow backlog instead of being silently applied.
 
+For this repository, every promoted learning iteration also syncs into the installed
+Codex global files and is pushed to GitHub. Versioned public changes should update
+the matching tag and GitHub Release after validation.
+
 See [docs/demo.md](docs/demo.md), [docs/faq.md](docs/faq.md), and
 [examples/medium-project](examples/medium-project) for a full example.
 

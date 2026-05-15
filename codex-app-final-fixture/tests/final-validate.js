@@ -253,6 +253,8 @@ const requiredGlobalPhrases = [
   "progress.jsonl",
   "autonomous learning artifacts",
   "improvement-backlog.jsonl",
+  "sync it into Codex global files",
+  "commit and push the repository update to GitHub",
   "Global guardrails"
 ];
 
@@ -276,6 +278,10 @@ const requiredSkillPhrases = [
   "run-retrospective.schema.json",
   "Autonomous Learning Loop",
   "High-risk candidates are never auto-applied",
+  "Post-promotion sync",
+  "node scripts/install.mjs --merge",
+  "push `main` to GitHub",
+  "GitHub API fallback",
   "documentation",
   "performance",
   "stop_continue_guard.py"

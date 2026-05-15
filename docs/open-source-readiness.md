@@ -16,6 +16,8 @@ Before publishing:
 - Confirm autonomous learning artifacts, schemas, and promotion gates are included.
 - Confirm high-risk global learning candidates are shadowed rather than
   auto-applied.
+- Confirm promoted learning iterations sync to installed global files and GitHub
+  after validation.
 - Confirm examples are under `examples/` and old local-runner fixtures are not
   tracked.
 - Review hooks in Codex App before trusting them.

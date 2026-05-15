@@ -71,6 +71,8 @@ Execution rules:
 - Track learning events in `improvement-candidates.jsonl` whenever the run exposes
   repeated friction, a missed validation, a reviewer finding that should generalize,
   or a prompt/rule gap.
+- After a validated learning candidate is promoted in this repository, sync the
+  change into Codex global files and GitHub before ending the learning iteration.
 - Use short cycles: inspect state, choose one high-value task, edit, validate,
   self-review, log, then immediately continue.
 - Send brief user-facing progress updates during the active session, but do not use
@@ -401,6 +403,24 @@ Promotion validation:
   available, one read-only reviewer pass before claiming readiness.
 - If validation fails, revert only the candidate's own changes, record `status =
   "rejected"`, and continue the original project work.
+
+Post-promotion sync:
+
+- For every auto-applied learning candidate in this repository, run
+  `node scripts/install.mjs --merge` after validation so `$CODEX_HOME` receives the
+  new global rules, skills, hooks, schemas, and agents immediately.
+- Verify the installed manifest version and the promoted rule or artifact in
+  `$CODEX_HOME` before reporting the promotion as complete.
+- Commit the focused promotion diff and push `main` to GitHub. If normal `git push`
+  is unavailable but GitHub credentials and the remote parent are verified, use the
+  GitHub API fallback to update the same commit without asking the user.
+- If the promotion changes `package.json` version, README release surface, public
+  templates, or open-source release notes, create or update the matching Git tag and
+  GitHub Release.
+- Record global install result, GitHub commit SHA, tag/release result, and any retry
+  or fallback in `promotion-report.md`.
+- Do not run post-promotion sync for shadowed high-risk candidates; record them only
+  in `$CODEX_HOME/learning/improvement-backlog.jsonl`.
 
 Retrospective cadence:
 
