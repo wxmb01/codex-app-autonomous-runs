@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2
+
+- Clarified that timed autonomous project runs of 1 hour or more explicitly authorize
+  read-only reviewer subagents.
+- Required at least one read-only reviewer subagent after orientation for 1h+ runs.
+- Documented the 1h+ reviewer trigger in README and App-only run docs.
+
 ## 0.1.1
 
 - Reduced default PreToolUse hook overhead by attaching it only to write/patch tools.

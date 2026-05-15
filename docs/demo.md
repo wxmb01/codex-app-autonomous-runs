@@ -29,6 +29,9 @@ record run-state.json, progress.md, and progress.jsonl, and use a read-only
 project completeness reviewer before final readiness.
 ```
 
+For runs of 1 hour or more, the duration request itself authorizes a read-only
+reviewer subagent after orientation.
+
 ## 4. Expected Run Files
 
 ```text

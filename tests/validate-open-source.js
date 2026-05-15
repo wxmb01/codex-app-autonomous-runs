@@ -143,10 +143,20 @@ assert.equal(/Bash|shell_command/.test(preToolMatcher), false);
 
 const packageJson = JSON.parse(read(join(repoRoot, "package.json")));
 assert.equal(packageJson.private, false);
+assert.equal(packageJson.version, "0.1.2");
 assert.ok(packageJson.scripts["install:dry-run"]);
 assert.ok(packageJson.scripts["uninstall:dry-run"]);
 assert.ok(packageJson.scripts["test:example"]);
 assert.ok(packageJson.scripts["bench:hooks"]);
+
+const agentsMd = read(join(templateRoot, "AGENTS.md"));
+const skillMd = read(join(templateRoot, "skills/timed-autonomous-run/SKILL.md"));
+const compactAgentsMd = agentsMd.replace(/\s+/g, " ");
+const compactSkillMd = skillMd.replace(/\s+/g, " ");
+assert.ok(compactAgentsMd.includes("1 hour or more"));
+assert.ok(compactAgentsMd.includes("explicit user authorization"));
+assert.ok(compactSkillMd.includes("1 hour or more is explicit"));
+assert.ok(compactSkillMd.includes("start at least one read-only reviewer"));
 
 const agentFiles = [
   "autonomous_reviewer.toml",

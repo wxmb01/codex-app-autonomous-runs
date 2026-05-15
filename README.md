@@ -146,6 +146,9 @@ For medium and large projects, the expected pattern is one main agent doing the
 work plus one read-only project completeness reviewer. Specialized reviewers are
 used only when the project risk warrants them.
 
+For timed autonomous runs of 1 hour or more, the duration request itself is treated
+as authorization to start at least one read-only reviewer subagent after orientation.
+
 See [docs/demo.md](docs/demo.md), [docs/faq.md](docs/faq.md), and
 [examples/medium-project](examples/medium-project) for a full example.
 

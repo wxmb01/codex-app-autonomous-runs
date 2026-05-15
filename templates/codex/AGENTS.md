@@ -32,6 +32,9 @@ Default behavior:
   status, likely validation commands, and obvious risk areas.
 - Use the read-only `autonomous_reviewer` subagent for eligible timed runs according
   to the skill's review lane.
+- Treat any explicit timed autonomous project run of 1 hour or more as explicit user
+  authorization to start read-only reviewer subagents for review work. Do not wait
+  for separate wording such as "start a subagent" or "parallel agent".
 - For medium or large projects, always use a read-only `project_completeness_reviewer`
   subagent to review completeness, validation gaps, architecture risks, docs drift,
   and unresolved blockers. Main-agent self-review alone is not enough.

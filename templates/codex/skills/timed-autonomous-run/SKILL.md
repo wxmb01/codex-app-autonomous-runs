@@ -37,6 +37,10 @@ done.
   instead of creating a duplicate.
 - If the target folder is missing, empty, or clearly not a project, ask for the real
   project path instead of creating a useless automation.
+- A user request for a timed autonomous project run of 1 hour or more is explicit
+  authorization to start read-only reviewer subagents for review work. Do not require
+  separate wording such as "start a subagent" or "parallel agent" before using the
+  required review lane.
 
 ## App-Only Long Active Session
 
@@ -71,6 +75,10 @@ Execution rules:
 - For medium or large projects, always spawn a read-only project completeness reviewer
   subagent early in the run and again at final readiness review. Prefer
   `project_completeness_reviewer` when available.
+- For any run requested for 1 hour or more, start at least one read-only reviewer
+  subagent after orientation and before the first major readiness claim, even if the
+  project is small. Use `autonomous_reviewer` unless project size or risk calls for
+  `project_completeness_reviewer` or a specialized reviewer.
 - Use the read-only `autonomous_reviewer` on major changes, validation failures,
   architecture/security/UI/artifact-heavy work, or at regular milestones.
 - If the App/runtime interrupts the turn, the next assistant turn should read the
@@ -250,6 +258,9 @@ extend hardening rather than claiming readiness.
   subagent after initial orientation and before declaring the project ready. It reviews
   project completeness, requirements coverage, validation gaps, architecture risks,
   documentation drift, and unresolved blockers.
+- A timed run of 1 hour or more counts as an explicit request for a read-only reviewer
+  subagent. Start the reviewer lane after orientation; do not skip it because the user
+  did not separately say "use a subagent".
 - For timed runs of 1 hour or more, large/unfamiliar projects, multi-file changes,
   UI/artifact work, architecture changes, migrations, security-sensitive code, failing
   validation, or explicit review/subagent requests, spawn one read-only reviewer
