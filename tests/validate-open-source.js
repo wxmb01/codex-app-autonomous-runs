@@ -456,9 +456,10 @@ function createRunningActiveRun(prefix, runName, options = {}) {
   writeFileSync(join(runDir, "progress.md"), "# Progress\n");
   writeFileSync(join(runDir, "progress.jsonl"), `${JSON.stringify(makeProgressEvent(options.progressEvent))}\n`);
   writeFileSync(join(runDir, "lessons-learned.md"), "# Lessons Learned\n\n- Keep working.\n");
-  writeFileSync(join(runDir, "improvement-candidates.jsonl"), `${JSON.stringify(options.candidate ?? makeLearningCandidate({
+  const candidates = options.candidates ?? [options.candidate ?? makeLearningCandidate({
     run_id: runName
-  }))}\n`);
+  })];
+  writeFileSync(join(runDir, "improvement-candidates.jsonl"), `${candidates.map((candidate) => JSON.stringify(candidate)).join("\n")}\n`);
   writeFileSync(join(runDir, "promotion-report.md"), "# Promotion Report\n\n- auto_applied: 1\n");
   if (options.writePromotionJson !== false) {
     writeFileSync(join(runDir, "promotion-report.json"), `${JSON.stringify(options.promotionReport ?? makePromotionReport())}\n`);
@@ -627,6 +628,36 @@ const highRiskLearningBlock = JSON.parse(runPython(stopHook, { cwd: highRiskLear
 assert.equal(highRiskLearningBlock.decision, "block");
 assert.ok(highRiskLearningBlock.reason.includes("must be shadowed"));
 
+const hiddenHighRiskLearning = createRunningActiveRun("codex-hidden-high-risk-learning-", "hidden-high-risk-learning", {
+  candidates: [
+    makeLearningCandidate({
+      run_id: "hidden-high-risk-learning",
+      category: "global-safety",
+      risk: "high",
+      scope: "codex-global",
+      promotion_decision: "auto-apply",
+      status: "applied"
+    }),
+    makeLearningCandidate({
+      run_id: "hidden-high-risk-learning"
+    })
+  ]
+});
+const hiddenHighRiskLearningBlock = JSON.parse(runPython(stopHook, { cwd: hiddenHighRiskLearning.root, stop_hook_active: false }));
+assert.equal(hiddenHighRiskLearningBlock.decision, "block");
+assert.ok(hiddenHighRiskLearningBlock.reason.includes("line 1"));
+assert.ok(hiddenHighRiskLearningBlock.reason.includes("must be shadowed"));
+
+const scalarCandidateLearning = createRunningActiveRun("codex-scalar-candidate-learning-", "scalar-candidate-learning", {
+  candidates: [
+    123
+  ]
+});
+const scalarCandidateLearningBlock = JSON.parse(runPython(stopHook, { cwd: scalarCandidateLearning.root, stop_hook_active: false }));
+assert.equal(scalarCandidateLearningBlock.decision, "block");
+assert.ok(scalarCandidateLearningBlock.reason.includes("line 1"));
+assert.ok(scalarCandidateLearningBlock.reason.includes("must be an object"));
+
 const malformedCandidate = createRunningActiveRun("codex-malformed-learning-", "malformed-learning", {
   candidate: makeLearningCandidate({
     run_id: "malformed-learning",
@@ -636,6 +667,85 @@ const malformedCandidate = createRunningActiveRun("codex-malformed-learning-", "
 const malformedCandidateBlock = JSON.parse(runPython(stopHook, { cwd: malformedCandidate.root, stop_hook_active: false }));
 assert.equal(malformedCandidateBlock.decision, "block");
 assert.ok(malformedCandidateBlock.reason.includes("target_files"));
+
+const malformedPromotionStep = createRunningActiveRun("codex-malformed-promotion-step-", "malformed-promotion-step", {
+  promotionReport: makePromotionReport({
+    steps: [{ name: "missing command", status: "passed" }]
+  })
+});
+const malformedPromotionStepBlock = JSON.parse(runPython(stopHook, { cwd: malformedPromotionStep.root, stop_hook_active: false }));
+assert.equal(malformedPromotionStepBlock.decision, "block");
+assert.ok(malformedPromotionStepBlock.reason.includes("steps[0].command"));
+
+const malformedPromotionValidation = createRunningActiveRun("codex-malformed-promotion-validation-", "malformed-promotion-validation", {
+  promotionReport: makePromotionReport({
+    validation: [{ name: "missing status", command: "npm test" }]
+  })
+});
+const malformedPromotionValidationBlock = JSON.parse(runPython(stopHook, { cwd: malformedPromotionValidation.root, stop_hook_active: false }));
+assert.equal(malformedPromotionValidationBlock.decision, "block");
+assert.ok(malformedPromotionValidationBlock.reason.includes("validation[0].status"));
+
+const missingPromotionTag = createRunningActiveRun("codex-missing-promotion-tag-", "missing-promotion-tag", {
+  promotionReport: makePromotionReport({
+    git: {
+      branch: "main",
+      commit_sha: "pending"
+    }
+  })
+});
+const missingPromotionTagBlock = JSON.parse(runPython(stopHook, { cwd: missingPromotionTag.root, stop_hook_active: false }));
+assert.equal(missingPromotionTagBlock.decision, "block");
+assert.ok(missingPromotionTagBlock.reason.includes("git.tag"));
+
+const invalidInstallStatus = createRunningActiveRun("codex-invalid-install-status-", "invalid-install-status", {
+  promotionReport: makePromotionReport({
+    install_result: {
+      status: "ok",
+      codex_home: "stop-hook-test",
+      manifest_version: "0.0.0"
+    }
+  })
+});
+const invalidInstallStatusBlock = JSON.parse(runPython(stopHook, { cwd: invalidInstallStatus.root, stop_hook_active: false }));
+assert.equal(invalidInstallStatusBlock.decision, "block");
+assert.ok(invalidInstallStatusBlock.reason.includes("install_result.status"));
+
+const malformedReviewerField = createRunningActiveRun("codex-malformed-reviewer-field-", "malformed-reviewer-field", {
+  promotionReport: makePromotionReport({
+    reviewer: {
+      required: false,
+      used: false,
+      agent_type: "none",
+      result: null,
+      findings: "not required for fixture"
+    }
+  })
+});
+const malformedReviewerFieldBlock = JSON.parse(runPython(stopHook, { cwd: malformedReviewerField.root, stop_hook_active: false }));
+assert.equal(malformedReviewerFieldBlock.decision, "block");
+assert.ok(malformedReviewerFieldBlock.reason.includes("reviewer.result"));
+
+const invalidPromotionCategory = createRunningActiveRun("codex-invalid-promotion-category-", "invalid-promotion-category", {
+  promotionReport: makePromotionReport({
+    promotion: {
+      categories: ["global-validation "],
+      changed_files: ["templates/codex/AGENTS.md"],
+      candidate_files: [],
+      validation_policy: "full validation"
+    },
+    reviewer: {
+      required: true,
+      used: true,
+      agent_type: "autonomous_reviewer",
+      result: "reviewer confirmed no blocker",
+      findings: "none"
+    }
+  })
+});
+const invalidPromotionCategoryBlock = JSON.parse(runPython(stopHook, { cwd: invalidPromotionCategory.root, stop_hook_active: false }));
+assert.equal(invalidPromotionCategoryBlock.decision, "block");
+assert.ok(invalidPromotionCategoryBlock.reason.includes("invalid category"));
 
 const longJsonl = createRunningActiveRun("codex-long-jsonl-", "long-jsonl", {
   progressEvent: {

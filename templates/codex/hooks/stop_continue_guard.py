@@ -90,6 +90,22 @@ def last_nonempty_line(path):
     return ""
 
 
+def read_jsonl_records(path):
+    records = []
+    try:
+        with path.open("r", encoding="utf-8-sig") as handle:
+            for line_number, line in enumerate(handle, start=1):
+                if not line.strip():
+                    continue
+                try:
+                    records.append((line_number, json.loads(line)))
+                except Exception:
+                    return None, f"{path.name} line {line_number} is not valid JSON"
+    except Exception:
+        return None, f"{path.name} cannot be read"
+    return records, ""
+
+
 def progress_ready(run_dir):
     progress_md = run_dir / "progress.md"
     progress_jsonl = run_dir / "progress.jsonl"
@@ -139,19 +155,23 @@ def learning_ready(run_dir):
     if not ok:
         return False, detail
 
-    candidates_path = run_dir / "improvement-candidates.jsonl"
-    try:
-        line = last_nonempty_line(candidates_path)
-    except Exception:
-        return False, "improvement-candidates.jsonl cannot be read"
-
-    if not line:
+    candidate_records, detail = read_jsonl_records(run_dir / "improvement-candidates.jsonl")
+    if candidate_records is None:
+        return False, detail
+    if not candidate_records:
         return True, ""
 
-    try:
-        candidate = json.loads(line)
-    except Exception:
-        return False, "latest improvement-candidates.jsonl line is not valid JSON"
+    for line_number, candidate in candidate_records:
+        ok, detail = improvement_candidate_ready(candidate)
+        if not ok:
+            return False, f"improvement-candidates.jsonl line {line_number}: {detail}"
+
+    return True, ""
+
+
+def improvement_candidate_ready(candidate):
+    if not isinstance(candidate, dict):
+        return False, "improvement candidate must be an object"
 
     required = [
         "timestamp",
@@ -170,7 +190,7 @@ def learning_ready(run_dir):
     ]
     missing = [key for key in required if key not in candidate]
     if missing:
-        return False, "latest improvement candidate missing: " + ", ".join(missing)
+        return False, "improvement candidate missing: " + ", ".join(missing)
 
     valid_sources = {
         "self_review",
@@ -204,7 +224,7 @@ def learning_ready(run_dir):
     ]
     for key, valid_values in enum_checks:
         if candidate.get(key) not in valid_values:
-            return False, f"latest improvement candidate has invalid {key}: {candidate.get(key)!r}"
+            return False, f"improvement candidate has invalid {key}: {candidate.get(key)!r}"
 
     string_fields = [
         "timestamp",
@@ -217,11 +237,11 @@ def learning_ready(run_dir):
     for key in string_fields:
         value = candidate.get(key)
         if not isinstance(value, str) or not value.strip():
-            return False, f"latest improvement candidate has invalid {key}"
+            return False, f"improvement candidate has invalid {key}"
 
     target_files = candidate.get("target_files")
     if not isinstance(target_files, list) or not all(isinstance(item, str) and item.strip() for item in target_files):
-        return False, "latest improvement candidate target_files must be a list of strings"
+        return False, "improvement candidate target_files must be a list of strings"
 
     if candidate["risk"] == "high" or candidate["category"] in {"global-safety", "release"}:
         if candidate["promotion_decision"] != "shadow-backlog" or candidate["status"] != "shadowed":
@@ -268,6 +288,9 @@ def promotion_report_ready(path):
 
     if report.get("status") not in {"pending", "passed", "failed", "dry-run", "skipped"}:
         return False, f"promotion-report.json has invalid status: {report.get('status')!r}"
+    for key in ["generated_at", "repository", "version"]:
+        if not nonempty_string(report.get(key)):
+            return False, f"promotion-report.json {key} is required"
 
     promotion = report.get("promotion")
     if not isinstance(promotion, dict):
@@ -278,20 +301,41 @@ def promotion_report_ready(path):
     categories = promotion.get("categories")
     if not string_list(categories):
         return False, "promotion-report.json promotion.categories must be a list of strings"
-    if not isinstance(promotion.get("changed_files"), list):
-        return False, "promotion-report.json promotion.changed_files must be a list"
-    if not isinstance(promotion.get("candidate_files"), list):
-        return False, "promotion-report.json promotion.candidate_files must be a list"
+    valid_categories = {
+        "project-local",
+        "global-prompt",
+        "global-validation",
+        "global-safety",
+        "release",
+        "documentation",
+        "performance",
+    }
+    invalid_categories = [category for category in categories if category not in valid_categories]
+    if invalid_categories:
+        return False, "promotion-report.json promotion.categories has invalid category: " + ", ".join(invalid_categories)
+    if not isinstance(promotion.get("changed_files"), list) or not all(
+        isinstance(item, str) for item in promotion.get("changed_files")
+    ):
+        return False, "promotion-report.json promotion.changed_files must be a list of strings"
+    if not isinstance(promotion.get("candidate_files"), list) or not all(
+        isinstance(item, str) for item in promotion.get("candidate_files")
+    ):
+        return False, "promotion-report.json promotion.candidate_files must be a list of strings"
     if not nonempty_string(promotion.get("validation_policy")):
         return False, "promotion-report.json promotion.validation_policy is required"
 
     validation = report.get("validation")
     if not isinstance(validation, list):
         return False, "promotion-report.json validation must be a list"
+    ok, detail = step_records_ready(validation, "validation")
+    if not ok:
+        return False, detail
 
     install_result = report.get("install_result")
     if not isinstance(install_result, dict) or not nonempty_string(install_result.get("status")):
         return False, "promotion-report.json install_result.status is required"
+    if install_result.get("status") not in {"pending", "passed", "failed", "dry-run", "skipped"}:
+        return False, f"promotion-report.json install_result.status is invalid: {install_result.get('status')!r}"
     if not nonempty_string(install_result.get("codex_home")):
         return False, "promotion-report.json install_result.codex_home is required"
     if not nonempty_string(install_result.get("manifest_version")):
@@ -302,6 +346,10 @@ def promotion_report_ready(path):
         return False, "promotion-report.json git.branch is required"
     if not nonempty_string(git.get("commit_sha")):
         return False, "promotion-report.json git.commit_sha is required"
+    if "tag" not in git:
+        return False, "promotion-report.json git.tag is required"
+    if git.get("tag") is not None and not isinstance(git.get("tag"), str):
+        return False, "promotion-report.json git.tag must be a string or null"
 
     github = report.get("github")
     if not isinstance(github, dict) or not isinstance(github.get("push_result"), dict):
@@ -326,6 +374,9 @@ def promotion_report_ready(path):
         return False, "promotion-report.json reviewer.used must be boolean"
     if not nonempty_string(reviewer.get("agent_type")):
         return False, "promotion-report.json reviewer.agent_type is required"
+    for key in ["result", "findings"]:
+        if key not in reviewer or not isinstance(reviewer.get(key), str):
+            return False, f"promotion-report.json reviewer.{key} must be a string"
     required_review_categories = {"global-prompt", "global-validation", "performance"}
     if required_review_categories.intersection(set(categories)):
         if reviewer.get("used") is not True or not nonempty_string(reviewer.get("result")):
@@ -333,7 +384,20 @@ def promotion_report_ready(path):
 
     if not isinstance(report.get("steps"), list):
         return False, "promotion-report.json steps must be a list"
+    ok, detail = step_records_ready(report.get("steps"), "steps")
+    if not ok:
+        return False, detail
 
+    return True, ""
+
+
+def step_records_ready(records, field_name):
+    for index, record in enumerate(records):
+        if not isinstance(record, dict):
+            return False, f"promotion-report.json {field_name}[{index}] must be an object"
+        for key in ["name", "command", "status"]:
+            if not nonempty_string(record.get(key)):
+                return False, f"promotion-report.json {field_name}[{index}].{key} is required"
     return True, ""
 
 

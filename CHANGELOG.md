@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.11
+
+- Strengthened the Stop hook learning gate so every
+  `improvement-candidates.jsonl` entry is validated, not only the latest entry.
+- Added stricter runtime checks for `promotion-report.json` categories,
+  validation records, step records, reviewer fields, install status, and git tag
+  shape.
+- Added regression coverage for hidden high-risk learning candidates and malformed
+  promotion evidence.
+
 ## 0.1.10
 
 - Added Codex App-compatible reviewer launch rules so specialized reviewer agents
